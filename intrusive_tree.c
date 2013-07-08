@@ -72,7 +72,7 @@ tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
 	}
 	else if (rel == -1) {
 		if (node->right != NULL)
-			__tree_search(node->left, find, cmp);
+			__tree_search(node->right, find, cmp);
 		else
 			return NULL;
 	}
