@@ -1,27 +1,11 @@
 #include <stdio.h>
 #include <assert.h>
+#include "utils.h"
 #include "intrusive_list.h"
 #include "symbol_table.h"
+#include "assembler.h"
 
 #define MAX_BUF 1000
-#define MAX_MEM 2000
-
-struct assembler_ops {
-	int 	(*input_init)		(void);
-	char 	(*input_getchar)	(void);
-	void	(*input_ungetchar)	(char ch);
-};
-
-struct scratch_space {
-	unsigned int buffer[MAX_MEM];
-	unsigned int counter;
-};
-
-struct assembler {
-	struct assembler_ops ops;		/* Assembler operations. */
-	struct scratch_space iscratch;	/* Scratch space for instructions. */
-	struct scratch_space dscratch;	/* Scratch space for data. */
-};
 
 typedef enum {
 	label,
@@ -58,16 +42,25 @@ struct lexer_state
 	state_func_p 	expected_next_state; 	/* The expected next state in case we need to deal with a syntax error. */
 };
 
+void print_symbols(table_element *element)
+{
+	symbol *sym = table_entry(element);
+
+	if (sym->name != NULL)
+		printf("%s\n", sym->name);
+}
+
 int main()
 {
-	symbol_table table;
+	assembler assem;
 
-	table_init(&table);
-	table_new_symbol(&table, "CRAP", EXTERN);
-	assert(table_find_symbol(&table, "CRAP") != NULL);
-	assert(table_find_symbol(&table, "SHIT") == NULL);
-	table_destroy(&table);
+	table_init(&assem.sym_table);
+	table_new_symbol(&assem.sym_table, "CRAP", EXTERN);
+	table_new_symbol(&assem.sym_table, "SHITFUCK", INTERN);
+	assert(table_find_symbol(&assem.sym_table, "CRAP") != NULL);
+	assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL);
+	table_traverse(&assem.sym_table, print_symbols);
+	table_destroy(&assem.sym_table);
 
-	/*table_new_symbol(&table, "crap", EXTERN);*/
 	return 0;
 }
