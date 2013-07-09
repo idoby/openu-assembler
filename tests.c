@@ -14,6 +14,7 @@ static void __print_test_header(struct test *t)
 {
 	printf("RUNNING TEST %s\n", t->name);
 	printf("=============");
+	
 	{
 		int i, len = strlen(t->name);
 		for (i = 0; i < len; ++i)

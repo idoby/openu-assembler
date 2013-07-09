@@ -2,6 +2,7 @@
 #define __ASSEMBLER_H
 
 #include "scratch_space.h"
+#include "symbol_table.h"
 
 struct assembler_ops {
 	int 	(*input_init)		(void);

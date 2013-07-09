@@ -14,10 +14,13 @@ static int __TEST_symbol_table(void)
 	assembler assem;
 
 	table_init(&assem.sym_table);
+
 	table_new_symbol(&assem.sym_table, "CRAP", EXTERN);
 	table_new_symbol(&assem.sym_table, "SHITFUCK", INTERN);
-	if (table_find_symbol(&assem.sym_table, "CRAP") == NULL) return TEST_FAILURE;
-	if (table_find_symbol(&assem.sym_table, "SHIT") != NULL) return TEST_FAILURE;
+
+	test_assert(table_find_symbol(&assem.sym_table, "CRAP") != NULL, "symbol 'CRAP' not found.");
+	test_assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL, "non-existent symbol 'SHIT' found?");
+
 	table_traverse(&assem.sym_table, __print_symbols);
 	table_destroy(&assem.sym_table);
 

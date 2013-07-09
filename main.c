@@ -1,9 +1,8 @@
-#include <stdio.h>
-#include <assert.h>
 #include "utils.h"
 #include "intrusive_list.h"
 #include "symbol_table.h"
 #include "assembler.h"
+#include "tests.h"
 
 #define MAX_BUF 1000
 
@@ -42,25 +41,8 @@ struct lexer_state
 	state_func_p 	expected_next_state; 	/* The expected next state in case we need to deal with a syntax error. */
 };
 
-void print_symbols(table_element *element)
-{
-	symbol *sym = table_entry(element);
-
-	if (sym->name != NULL)
-		printf("%s\n", sym->name);
-}
-
 int main()
 {
-	assembler assem;
-
-	table_init(&assem.sym_table);
-	table_new_symbol(&assem.sym_table, "CRAP", EXTERN);
-	table_new_symbol(&assem.sym_table, "SHITFUCK", INTERN);
-	assert(table_find_symbol(&assem.sym_table, "CRAP") != NULL);
-	assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL);
-	table_traverse(&assem.sym_table, print_symbols);
-	table_destroy(&assem.sym_table);
-
+	run_tests();
 	return 0;
 }
