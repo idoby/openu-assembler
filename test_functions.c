@@ -17,12 +17,16 @@ static int __TEST_symbol_table(void)
 
 	table_new_symbol(&assem.sym_table, "CRAP", EXTERN);
 	table_new_symbol(&assem.sym_table, "SHITFUCK", INTERN);
+	table_new_symbol(&assem.sym_table, "ZZZZZZZZZZZ", INTERN_UNDEFINED);
+	table_new_symbol(&assem.sym_table, "A symbol with more than 30 characters should get truncated", INTERN_UNDEFINED);
 
 	test_assert(table_find_symbol(&assem.sym_table, "CRAP") != NULL, "symbol 'CRAP' not found.");
 	test_assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL, "non-existent symbol 'SHIT' found?");
 
 	table_traverse(&assem.sym_table, __print_symbols);
 	table_destroy(&assem.sym_table);
+
+	test_assert(assem.sym_table.root_node == NULL, "table not destroyed properly.");
 
 	return TEST_SUCCESS;
 }

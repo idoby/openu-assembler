@@ -14,7 +14,13 @@ all: as
 as: $(SOURCES) $(EXTRA_DEPS)
 	gcc $(FLAGS) $(SOURCES)
 
-.PHONY: clean
+.PHONY: clean run_tests
 
 clean:
 	rm as
+
+run_tests: as valgrind_test
+
+valgrind_test:
+	valgrind -v --track-origins=yes ./as 2> test_log_valgrind_errors; \
+	grep 'ERROR SUMMARY' test_log_valgrind_errors;

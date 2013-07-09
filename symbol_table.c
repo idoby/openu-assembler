@@ -47,7 +47,10 @@ void table_new_symbol(symbol_table* table, const char* name, symbol_type type)
 
 	/* Initialize the new symbol object. */
 	sym->type = type;
+	sym->address_space = NULL;
+	sym->address_offset = 0;
 	strncpy(sym->name, name, SYMBOL_MAX_LENGTH + 1);
+	sym->name[SYMBOL_MAX_LENGTH] = '\0';
 	list_init(&sym->orphaned_references);
 	tree_node_init(&sym->sym_tree);
 
@@ -62,6 +65,7 @@ symbol*	table_find_symbol(symbol_table* table, const char* name)
 		No need to initialize properly because we only care about the name for the comparison. */
 	symbol sym;
 	strncpy(sym.name, name, SYMBOL_MAX_LENGTH + 1); /* Copy the name to the temp symbol. */
+	sym.name[SYMBOL_MAX_LENGTH] = '\0';
 
 	res = tree_search(table, &sym.sym_tree, __table_compare_symbols);
 
@@ -74,6 +78,7 @@ symbol*	table_find_symbol(symbol_table* table, const char* name)
 void table_destroy(symbol_table* table)
 {
 	tree_traverse(table, __delete_element);
+	table->root_node = NULL;
 }
 
 void table_traverse(symbol_table *table, table_visit_func visit)
