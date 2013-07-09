@@ -2,7 +2,7 @@
 #define __TESTS_H
 
 #ifdef RUN_TESTS
-void run_tests();
+void run_tests(void);
 #else
 #define run_tests() 
 #endif
