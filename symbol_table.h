@@ -4,6 +4,7 @@
 
 #include "intrusive_list.h"
 #include "intrusive_tree.h"
+#include "translate.h"
 
 #define SYMBOL_MAX_LENGTH 30
 
@@ -28,12 +29,24 @@ typedef struct symbol {
 } symbol;
 
 #define table_entry(entry) container_of(symbol, entry, sym_tree)
-typedef void (*table_visit_func)(table_element *symbol);
 
+typedef void (*table_visit_func)(table_element *symbol);
+typedef void (*table_consume_func)(instruction *inst);
+
+		/* Table initializer. Must be called after allocation. */
 void	table_init(symbol_table* table);
+		/* Insert a new symbol into the table. */
 void	table_new_symbol(symbol_table* table, const char* name, symbol_type type);
+		/* Look up a symbol in the table by name. */
 symbol*	table_find_symbol(symbol_table* table, const char* name);
+		/* Table destructor. Frees up all the memory. Remember to call! */
 void 	table_destroy(symbol_table *table);
+		/* Iterates over all symbols in the table. */
 void	table_traverse(symbol_table *table, table_visit_func visit);
+
+		/* Add a new orphaned reference to a symbol. */
+void	table_add_reference(symbol *sym, instruction *inst);
+		/* Iterate over the references to a symbol, deleting them as we go. */
+void	table_consume_references(symbol *sym, table_consume_func consume);
 
 #endif

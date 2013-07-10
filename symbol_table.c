@@ -4,13 +4,29 @@
 
 #define table_insert(table, new) tree_insert(table, new, __table_compare_symbols)
 
+struct orphaned_reference {
+	instruction		*inst;
+	list 			refs;
+};
+
 /* Delete a single element from the tree. */
-static void __delete_element(tree_node *element)
+static void __delete_element(table_element *element)
 {
+	struct orphaned_reference *ref, *safe;
 	symbol *sym = table_entry(element);
 
-	/* TODO: delete orphaned reference list. */
+	/* Delete orphaned references, if any exist. */
+	list_for_each_entry_safe(	&sym->orphaned_references,
+								ref,
+								safe,
+								struct orphaned_reference,
+								refs)
+	{
+		list_remove(&ref->refs);
+		free(ref);
+	}
 
+	/* Deallocate symbol itself. */
 	free(sym);
 }
 
@@ -40,9 +56,9 @@ static int __table_compare_symbols(tree_node *e1, tree_node* e2)
 
 void table_new_symbol(symbol_table* table, const char* name, symbol_type type)
 {
-	symbol *sym = malloc(sizeof(symbol));
+	symbol *sym;
 
-	if (sym == NULL)
+	if ((sym = malloc(sizeof(*sym))) == NULL)
 		return;
 
 	/* Initialize the new symbol object. */
@@ -84,4 +100,35 @@ void table_destroy(symbol_table* table)
 void table_traverse(symbol_table *table, table_visit_func visit)
 {
 	tree_traverse(table, visit);
+}
+
+void table_add_reference(symbol *sym, struct instruction *inst)
+{
+	struct orphaned_reference *ref;
+
+	if (sym == NULL || inst == NULL)
+		return;
+
+	if ((ref = malloc(sizeof(*ref))) == NULL)
+		return;
+
+	ref->inst = inst;
+
+	list_insert_before(&sym->orphaned_references, &ref->refs);
+}
+
+void table_consume_references(symbol *sym, table_consume_func consume)
+{
+	struct orphaned_reference *ref, *safe;
+
+	if (sym == NULL || consume == NULL)
+		return;
+
+	list_for_each_entry_safe(&sym->orphaned_references, ref, safe, struct orphaned_reference, refs)
+	{
+		consume(ref->inst);
+
+		list_remove(&ref->refs);
+		free(ref);
+	}
 }
