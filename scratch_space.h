@@ -20,7 +20,8 @@ struct scratch_space {
 		unsigned int type : LOG2(CELL_TYPE_MAX);
 	} cells[MAX_MEM];
 
-	unsigned int counter;						/* DC/IC, current offset into the buffer. */
+	unsigned int offset_next;					/* DC/IC, offset of the next word to be written to the buffer. */
+	unsigned int offset_global;					/* Offset from which the buffer is dumped to memory. */
 };
 
 #endif

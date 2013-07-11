@@ -54,12 +54,12 @@ static int __table_compare_symbols(tree_node *e1, tree_node* e2)
 	return 0;
 }
 
-void table_new_symbol(symbol_table* table, const char* name, symbol_type type)
+symbol* table_new_symbol(symbol_table* table, const char* name, symbol_type type)
 {
 	symbol *sym;
 
 	if ((sym = malloc(sizeof(*sym))) == NULL)
-		return;
+		return NULL;
 
 	/* Initialize the new symbol object. */
 	sym->type = type;
@@ -72,6 +72,8 @@ void table_new_symbol(symbol_table* table, const char* name, symbol_type type)
 
 	/* Insert into table. */
 	table_insert(table, &sym->sym_tree);
+
+	return sym;
 }
 
 symbol*	table_find_symbol(symbol_table* table, const char* name)
@@ -102,19 +104,22 @@ void table_traverse(symbol_table *table, table_visit_func visit)
 	tree_traverse(table, visit);
 }
 
-void table_add_reference(symbol *sym, struct instruction *inst)
+int table_add_reference(symbol *sym, struct instruction *inst)
 {
 	struct orphaned_reference *ref;
 
 	if (sym == NULL || inst == NULL)
-		return;
+		return 0;
 
 	if ((ref = malloc(sizeof(*ref))) == NULL)
-		return;
+		return 0;
 
 	ref->inst = inst;
 
+	/* Insert new reference object at the end of the list. */
 	list_insert_before(&sym->orphaned_references, &ref->refs);
+
+	return 1;
 }
 
 void table_consume_references(symbol *sym, table_consume_func consume)

@@ -28,25 +28,31 @@ typedef struct symbol {
 	table_element			sym_tree;				/* Binary search subtree for symbol table. */
 } symbol;
 
+		/*	Converts from a list* to its containing symbol*. */
 #define table_entry(entry) container_of(symbol, entry, sym_tree)
 
+		/*	Prototype for function handling each symbol in the table in traversal. */
 typedef void (*table_visit_func)(table_element *symbol);
+		/*	Prototype for function handling each instruction in a reference list in traversal. */
 typedef void (*table_consume_func)(instruction *inst);
 
-		/* Table initializer. Must be called after allocation. */
+		/*	Table initializer. Must be called after allocation. */
 void	table_init(symbol_table* table);
-		/* Insert a new symbol into the table. */
-void	table_new_symbol(symbol_table* table, const char* name, symbol_type type);
-		/* Look up a symbol in the table by name. */
+		/*	Insert a new symbol into the table. */
+symbol*	table_new_symbol(symbol_table* table, const char* name, symbol_type type);
+		/*	Look up a symbol in the table by name.
+			Returns a pointer to the new symbol. */
 symbol*	table_find_symbol(symbol_table* table, const char* name);
-		/* Table destructor. Frees up all the memory. Remember to call! */
+		/*	Table destructor. Frees up all the memory. Remember to call! */
 void 	table_destroy(symbol_table *table);
-		/* Iterates over all symbols in the table. */
+		/*	Iterates over all symbols in the table. */
 void	table_traverse(symbol_table *table, table_visit_func visit);
 
-		/* Add a new orphaned reference to a symbol. */
-void	table_add_reference(symbol *sym, instruction *inst);
-		/* Iterate over the references to a symbol, deleting them as we go. */
+		/*	Add a new orphaned reference to a symbol.
+			Returns 1 on success or 0 on error. This is because I don't
+			want to expose the implementation of references to the client. */
+int	table_add_reference(symbol *sym, instruction *inst);
+		/*	Iterate over the references to a symbol, deleting them as we go. */
 void	table_consume_references(symbol *sym, table_consume_func consume);
 
 #endif
