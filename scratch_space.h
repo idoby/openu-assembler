@@ -14,7 +14,7 @@ typedef enum mem_cell_type {
 	CELL_TYPE_MAX = RELOCATABLE
 } mem_cell_type;
 
-struct scratch_space {
+typedef struct scratch_space {
 	struct {									/*	A cell of memory consists of the data stored */
 		unsigned int data : WORD_SIZE_BITS;		/*	and the type of the cell, to be printed out later. */
 		unsigned int type : LOG2(CELL_TYPE_MAX);
@@ -22,6 +22,6 @@ struct scratch_space {
 
 	unsigned int offset_next;					/* DC/IC, offset of the next word to be written to the buffer. */
 	unsigned int offset_global;					/* Offset from which the buffer is dumped to memory. */
-};
+} scratch_space;
 
 #endif

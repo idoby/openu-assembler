@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "symbol_table.h"
+#include "translate.h"
 #include "assembler.h"
 
 static void __print_inst(instruction *inst)
@@ -22,18 +23,17 @@ static int __TEST_instruction_make(void)
 	instruction *inst1, *inst2;
 
 	/* Get an instruction that exists.*/
-	inst1 = make_new_instruction("clr");
+	inst1 = instruction_make("clr");
 
 	/* Get one that doesn't. */
-	inst2 = make_new_instruction("moo");
+	inst2 = instruction_make("moo");
 
 	test_assert(inst1 != NULL && strcmp(inst1->proto->name, "clr") == 0, "clr instruction not found!");
 	test_assert(inst2 == NULL, "moo instruction exists?");
 
 	__print_inst(inst1);
 
-	free(inst2);
-	free(inst1);
+	instruction_destroy(inst1);
 
 	return TEST_SUCCESS;
 }
@@ -55,8 +55,8 @@ static int __TEST_symbol_table(void)
 {
 	assembler assem;
 	symbol *moo = NULL;
-	instruction *inst1 = make_new_instruction("mov");
-	instruction *inst2 = make_new_instruction("prn");
+	instruction *inst1 = instruction_make("mov");
+	instruction *inst2 = instruction_make("prn");
 
 	table_init(&assem.sym_table);
 
@@ -80,8 +80,8 @@ static int __TEST_symbol_table(void)
 
 	test_assert(assem.sym_table.root_node == NULL, "table not destroyed properly.");
 
-	free(inst1);
-	free(inst2);
+	instruction_destroy(inst1);
+	instruction_destroy(inst2);
 
 	return TEST_SUCCESS;
 }

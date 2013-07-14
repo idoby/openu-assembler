@@ -51,7 +51,7 @@ void	table_traverse(symbol_table *table, table_visit_func visit);
 		/*	Add a new orphaned reference to a symbol.
 			Returns 1 on success or 0 on error. This is because I don't
 			want to expose the implementation of references to the client. */
-int	table_add_reference(symbol *sym, instruction *inst);
+int	table_add_reference(symbol *sym, struct instruction *inst);
 		/*	Iterate over the references to a symbol, deleting them as we go. */
 void	table_consume_references(symbol *sym, table_consume_func consume);
 
