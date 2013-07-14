@@ -44,7 +44,6 @@ struct lexer_state
 
 int main()
 {
-	printf("sizeof scratch: %d. sizeof memcell: %d.\n", sizeof(struct scratch_space), sizeof(((struct scratch_space*)0)->cells[0]));
 	run_tests();
 	return 0;
 }

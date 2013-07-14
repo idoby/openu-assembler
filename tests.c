@@ -1,5 +1,3 @@
-#ifdef RUN_TESTS
-
 #include <stdio.h>
 #include <string.h>
 
@@ -7,7 +5,7 @@
 
 #include "test_functions.c"
 
-struct test tests[] =
+static struct test tests[] =
 			{	TEST_LIST(TEST_STRUCT_ENTRY)
 				{"NULL", NULL}			};
 
@@ -32,11 +30,8 @@ static void __print_test_footer(void)
 	putchar('\n');
 }
 
-#endif /* RUN_TESTS */
-
 void run_tests(void)
 {
-#ifdef RUN_TESTS
 	struct test *t = &tests[0];
 	int i = 1;
 	int max_tests = sizeof(tests) / sizeof(tests[0]) - 1;
@@ -49,5 +44,4 @@ void run_tests(void)
 		__print_test_result(t);
 		__print_test_footer();
 	}
-#endif /* RUN_TESTS */
 }

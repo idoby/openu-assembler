@@ -5,6 +5,39 @@
 #include "symbol_table.h"
 #include "assembler.h"
 
+static void __print_inst(instruction *inst)
+{
+	if (inst == NULL)
+		return;
+
+	printf("instruction name: %s\n", 	inst->proto->name);
+	printf("instruction opcode: %d\n", 	inst->proto->opcode);
+	printf("instruction operands: %d\n",inst->proto->num_operands);
+	printf("instruction src allowed: %d\n", inst->proto->allowed_modes[1]);
+	printf("instruction dst allowed: %d\n", inst->proto->allowed_modes[0]);
+}
+
+static int __TEST_instruction_make(void)
+{
+	instruction *inst1, *inst2;
+
+	/* Get an instruction that exists.*/
+	inst1 = make_new_instruction("clr");
+
+	/* Get one that doesn't. */
+	inst2 = make_new_instruction("moo");
+
+	test_assert(inst1 != NULL && strcmp(inst1->proto->name, "clr") == 0, "clr instruction not found!");
+	test_assert(inst2 == NULL, "moo instruction exists?");
+
+	__print_inst(inst1);
+
+	free(inst2);
+	free(inst1);
+
+	return TEST_SUCCESS;
+}
+
 static void __print_symbols(table_element *element)
 {
 	symbol *sym = table_entry(element);
@@ -15,15 +48,15 @@ static void __print_symbols(table_element *element)
 
 static void __print_refs(instruction *inst)
 {
-	printf("REF: %s\n", inst->inst);
+	printf("REF: %s\n", inst->proto->name);
 }
 
 static int __TEST_symbol_table(void)
 {
 	assembler assem;
 	symbol *moo = NULL;
-	instruction inst1 = {"MOV"};
-	instruction inst2 = {"BLABLA"};
+	instruction *inst1 = make_new_instruction("mov");
+	instruction *inst2 = make_new_instruction("prn");
 
 	table_init(&assem.sym_table);
 
@@ -38,14 +71,17 @@ static int __TEST_symbol_table(void)
 	table_traverse(&assem.sym_table, __print_symbols);
 
 	moo = table_find_symbol(&assem.sym_table, "MOO");
-	table_add_reference(moo, &inst1);
-	table_add_reference(moo, &inst2);
+	table_add_reference(moo, inst1);
+	table_add_reference(moo, inst2);
 
 	table_consume_references(moo, __print_refs);
 
 	table_destroy(&assem.sym_table);
 
 	test_assert(assem.sym_table.root_node == NULL, "table not destroyed properly.");
+
+	free(inst1);
+	free(inst2);
 
 	return TEST_SUCCESS;
 }
@@ -118,7 +154,8 @@ static int __TEST_list_test_empty(void)
 }
 /*	The list of tests to be run.
 	Add new tests here. */
-#define TEST_LIST(test_list_entry)	\
-	test_list_entry(symbol_table)	\
-	test_list_entry(list_test)		\
-	test_list_entry(list_test_empty)
+#define TEST_LIST(list_entry)		\
+	list_entry(instruction_make)	\
+	list_entry(symbol_table)		\
+	list_entry(list_test)			\
+	list_entry(list_test_empty)

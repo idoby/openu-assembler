@@ -1,4 +1,4 @@
-SOURCES		= main.c intrusive_tree.c intrusive_list.c symbol_table.c
+SOURCES		= main.c intrusive_tree.c intrusive_list.c symbol_table.c translate.c
 FLAGS		= -ansi -pedantic -Wall -Wextra -g -o as
 EXTRA_DEPS	= *.h
 WITH_TESTS = y
@@ -19,7 +19,7 @@ as: $(SOURCES) $(EXTRA_DEPS)
 clean:
 	rm as
 
-run_tests: as valgrind_test
+run_tests: clean as valgrind_test
 
 valgrind_test:
 	clear; \
