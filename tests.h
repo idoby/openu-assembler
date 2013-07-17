@@ -9,7 +9,7 @@ typedef enum test_error {
 #ifdef RUN_TESTS
 test_error run_tests(void);
 #else
-#define run_tests() 
+#define run_tests() TEST_SUCCESS
 #endif
 
 #endif

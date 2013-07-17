@@ -18,7 +18,7 @@ typedef struct translate_ops {
 	translate_context*	(*translate_init)								/* Module constructor. */
 						(list *insts, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch);
 	void				(*translate_destroy)(translate_context *tc);	/* Module destructor. */
-	int 				(*translate_line)(translate_context *tc);		/* Translate a single line. */
+	translate_error		(*translate_line)(translate_context *tc);		/* Translate a single line. */
 } translate_ops;
 
 #endif

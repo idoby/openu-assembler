@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
+
 #include "assembler.h"
 #include "default_input.h"
+
 #include "tests.h"
 
 int main(int argc, char** argv)
