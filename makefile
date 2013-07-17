@@ -1,4 +1,4 @@
-SOURCES		= main.c intrusive_tree.c intrusive_list.c symbol_table.c translate.c
+SOURCES		= main.c intrusive_tree.c intrusive_list.c symbol_table.c translate.c default_input.c
 FLAGS		= -ansi -pedantic -Wall -Wextra -g -o as
 EXTRA_DEPS	= *.h
 WITH_TESTS = y

@@ -15,9 +15,9 @@ typedef enum mem_cell_type {
 } mem_cell_type;
 
 typedef struct scratch_space {
-	struct {									/*	A cell of memory consists of the data stored */
-		unsigned int data : WORD_SIZE_BITS;		/*	and the type of the cell, to be printed out later. */
-		unsigned int type : LOG2(CELL_TYPE_MAX);
+	struct {
+		unsigned int data : WORD_SIZE_BITS;		/*	A cell of memory consists of the data stored */
+		unsigned int type : LOG2(CELL_TYPE_MAX);/*	and the type of the cell, to be printed out later. */
 	} cells[MAX_MEM];
 
 	unsigned int offset_next;					/* DC/IC, offset of the next word to be written to the buffer. */

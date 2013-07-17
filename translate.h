@@ -5,6 +5,14 @@
 
 #define MAX_OPERANDS				2
 
+typedef struct translate_context {
+	int temp; /* TODO: define this fully. */
+} translate_context;
+
+typedef struct translate_ops {
+	int temp_member; /* TODO: define this part. */
+} translate_ops;
+
 typedef struct ins_prototype {
 	char *name;
 	unsigned int opcode;
