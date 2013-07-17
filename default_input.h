@@ -6,6 +6,7 @@
 input_context*	default_input_init(char *file_name);
 void			default_input_destroy(input_context* in);
 char*			default_input_get_line(input_context* in);
+unsigned int	default_input_get_line_number(input_context* in);
 void			default_input_destroy_line(input_context* in);
 
 #include "assembler.h"

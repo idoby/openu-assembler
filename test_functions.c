@@ -18,7 +18,7 @@ static int __TEST_default_input(void)
 	/* Read all lines. */
 	while (input.input_get_line(ic) != NULL);
 
-	printf("# of lines in test file: %d.\n", ic->line_number);
+	printf("# of lines in test file: %d.\n", input.input_get_line_number(ic));
 
 	input.input_destroy(ic);
 

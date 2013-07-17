@@ -4,15 +4,22 @@
 
 #include "default_input.h"
 
+typedef struct default_input_context {
+	char			file_name[MAX_FILE_NAME];
+	FILE*			f;
+	char			line[MAX_BUF];
+	unsigned int 	line_number;
+} default_input_context;
+
 input_ops default_input_ops =
-		{default_input_init, default_input_get_line, default_input_destroy_line, default_input_destroy};
+		{default_input_init, default_input_get_line, default_input_get_line_number, default_input_destroy_line, default_input_destroy};
 
 const char default_file_extension[] = ".as";
 const size_t default_file_ext_len = sizeof(default_file_extension) - 1;
 
 input_context* default_input_init(char *file_name)
 {
-	input_context* in;
+	default_input_context* dic;
 
 	if (file_name == NULL)
 		return NULL;
@@ -21,49 +28,63 @@ input_context* default_input_init(char *file_name)
 	if (strlen(file_name) + default_file_ext_len >= MAX_FILE_NAME)
 		return NULL;
 
-	if ((in = malloc(sizeof(*in))) == NULL)
+	if ((dic = malloc(sizeof(*dic))) == NULL)
 		return NULL;
 
-	in->line_number = 0;
+	dic->line_number = 0;
 
 	/* Copy the file name and append the ".as" we need to open it. */
-	strncpy(in->file_name, file_name, MAX_FILE_NAME);
-	strncat(in->file_name, default_file_extension, default_file_ext_len);
+	strncpy(dic->file_name, file_name, MAX_FILE_NAME);
+	strncat(dic->file_name, default_file_extension, default_file_ext_len);
 
 
-	if ((in->f = fopen(in->file_name, "r")) == NULL)
+	if ((dic->f = fopen(dic->file_name, "r")) == NULL)
 	{
-		free(in);
+		free(dic);
 		return NULL;
 	}
 
-	return in;
+	return (input_context*)dic;
 }
 
-char* default_input_get_line(input_context* in)
+char* default_input_get_line(input_context *ic)
 {
-	if (in == NULL || in->f == NULL)
+	default_input_context *dic = ic;
+
+	if (dic == NULL || dic->f == NULL)
 		return NULL;
 
-	if (fgets(in->line, MAX_BUF, in->f) == NULL)
+	if (fgets(dic->line, MAX_BUF, dic->f) == NULL)
 		return NULL;
 
-	in->line_number++;
+	dic->line_number++;
 	
-	return in->line;
+	return dic->line;
 }
 
-void default_input_destroy_line(input_context* in)
+unsigned int default_input_get_line_number(input_context *ic)
 {
-	in = in; /* Nothing to do here, but stop the compiler from crying. */
+	default_input_context *dic = ic;
+
+	if (dic == NULL)
+		return 0;
+
+	return dic->line_number;
 }
 
-void default_input_destroy(input_context* in)
+void default_input_destroy_line(input_context *ic)
 {
-	if (in == NULL)
+	ic = ic; /* Nothing to do here, but stop the compiler from crying. */
+}
+
+void default_input_destroy(input_context *ic)
+{
+	default_input_context *dic = ic;
+
+	if (dic == NULL)
 		return;
 
-	fclose(in->f);
+	fclose(dic->f);
 
-	free(in);
+	free(dic);
 }
