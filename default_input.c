@@ -6,6 +6,9 @@
 
 #include "assembler.h"
 
+#define MAX_BUF 1024
+#define MAX_FILE_NAME 256
+
 typedef struct default_input_context {
 	char			file_name[MAX_FILE_NAME];
 	FILE*			f;
