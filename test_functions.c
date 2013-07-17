@@ -3,9 +3,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "symbol_table.h"
-#include "translate.h"
 #include "assembler.h"
+
 #include "default_input.h"
+#include "default_translate.h"
 
 static int __TEST_default_input(void)
 {
@@ -42,17 +43,17 @@ static int __TEST_instruction_make(void)
 	instruction *inst1, *inst2;
 
 	/* Get an instruction that exists.*/
-	inst1 = instruction_make("clr");
+	inst1 = default_instruction_make("clr");
 
 	/* Get one that doesn't. */
-	inst2 = instruction_make("moo");
+	inst2 = default_instruction_make("moo");
 
 	test_assert(inst1 != NULL && strcmp(inst1->proto->name, "clr") == 0, "clr instruction not found!");
 	test_assert(inst2 == NULL, "moo instruction exists?");
 
 	__print_inst(inst1);
 
-	instruction_destroy(inst1);
+	default_instruction_destroy(inst1);
 
 	return TEST_SUCCESS;
 }
@@ -75,8 +76,8 @@ static int __TEST_symbol_table(void)
 {
 	assembler assem;
 	symbol *moo = NULL;
-	instruction *inst1 = instruction_make("mov");
-	instruction *inst2 = instruction_make("prn");
+	instruction *inst1 = default_instruction_make("mov");
+	instruction *inst2 = default_instruction_make("prn");
 
 	table_init(&assem.sym_table);
 
@@ -100,8 +101,8 @@ static int __TEST_symbol_table(void)
 
 	test_assert(assem.sym_table.root_node == NULL, "table not destroyed properly.");
 
-	instruction_destroy(inst1);
-	instruction_destroy(inst2);
+	default_instruction_destroy(inst1);
+	default_instruction_destroy(inst2);
 
 	return TEST_SUCCESS;
 }

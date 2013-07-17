@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
-#include "translate.h"
+
+#include "default_translate.h"
+
 #include "symbol_table.h"
 
 #define INSTRUCTION_NAME_MAX_LEN 	4
@@ -27,10 +29,10 @@
 #define INS_MAKE_PROTOTYPE(name, opcode, ops, src_modes, dst_modes)	\
 	{#name, (opcode), (ops), {(src_modes), (dst_modes)}},
 
-ins_prototype inst_prototypes[] = { INSTRUCTION_LIST(INS_MAKE_PROTOTYPE) /*,*/ {NULL, 0, 0, {0,0}} }; /* This line is not an error. */
+static ins_prototype inst_prototypes[] = { INSTRUCTION_LIST(INS_MAKE_PROTOTYPE) /*,*/ {NULL, 0, 0, {0,0}} }; /* This line is not an error. */
 
 typedef struct address {
-	unsigned int type;
+	enum addressing_mode type;
 	union address_data {
 		int immediate_data;
 		symbol *direct_sym;
@@ -55,7 +57,7 @@ static struct ins_prototype* __get_prototype(char* name)
 	return NULL;
 }
 
-instruction* instruction_make(char *name)
+instruction* default_instruction_make(char *name)
 {
 	instruction *inst;
 	unsigned int i = 0;
@@ -80,18 +82,18 @@ instruction* instruction_make(char *name)
 	return inst;
 }
 
-static void address_destroy(address *ad)
+static void __address_destroy(address *ad)
 {
 	if (ad == NULL)
 		return;
 
 	if (ad->type == INDEX && ad->data.index.index != NULL)
-		address_destroy(ad->data.index.index);
+		__address_destroy(ad->data.index.index);
 
 	free(ad);
 }
 
-void instruction_destroy(instruction *inst)
+void default_instruction_destroy(instruction *inst)
 {
 	unsigned int i = 0;
 	if (inst == NULL)
@@ -100,7 +102,7 @@ void instruction_destroy(instruction *inst)
 	list_remove(&inst->insts);
 
 	for (; i < MAX_OPERANDS; ++i)
-		address_destroy(inst->operands[i]);
+		__address_destroy(inst->operands[i]);
 
 	free(inst);
 }
