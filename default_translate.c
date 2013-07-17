@@ -5,6 +5,17 @@
 
 #include "symbol_table.h"
 
+enum addressing_mode {
+	IMMEDIATE 	= 1,
+	DIRECT		= 2,
+	INDEX		= 4,
+	REGISTER	= 8,
+	ALL = IMMEDIATE | DIRECT | INDEX | REGISTER,
+	NO_IMMEDIATE = DIRECT | INDEX | REGISTER,
+	NONE = 0,
+	ADDRESSING_MAX_MODE = REGISTER
+};
+
 #define INSTRUCTION_NAME_MAX_LEN 	4
 
 #define INSTRUCTION_LIST(list_entry)	\

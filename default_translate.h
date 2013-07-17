@@ -20,18 +20,7 @@ typedef struct instruction {
 	list	insts;
 } instruction;
 
-enum addressing_mode {
-	IMMEDIATE 	= 1,
-	DIRECT		= 2,
-	INDEX		= 4,
-	REGISTER	= 8,
-	ALL = IMMEDIATE | DIRECT | INDEX | REGISTER,
-	NO_IMMEDIATE = DIRECT | INDEX | REGISTER,
-	NONE = 0,
-	ADDRESSING_MAX_MODE = REGISTER
-};
-
-/* Exported out of the module for testing: */
+/* Exported out of the module for testing, but still should not be used! */
 
 /* Returns a new instruction object with the prototype already set, based on name. */
 instruction*	default_instruction_make(char *name);

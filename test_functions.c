@@ -38,7 +38,7 @@ static void __print_inst(instruction *inst)
 	printf("instruction dst allowed: %d\n", inst->proto->allowed_modes[0]);
 }
 
-static int __TEST_instruction_make(void)
+static int __TEST_default_instruction_make(void)
 {
 	instruction *inst1, *inst2;
 
@@ -66,18 +66,23 @@ static void __print_symbols(table_element *element)
 		printf("SYMBOL: %s TYPE: %d\n", sym->name, sym->type);
 }
 
+struct dummy_ref {
+	int an_int;
+	char a_char;
+} dref1, dref2;
+
 static void __print_refs(void *ref)
 {
-	instruction *inst = ref; /* Converting from void* implicitly is fine.*/
-	printf("REF: %s\n", inst->proto->name);
+	struct dummy_ref *dref = ref; /* Converting from void* implicitly is fine.*/
+	printf("REF: %d, %c\n", dref->an_int, dref->a_char);
 }
 
 static int __TEST_symbol_table(void)
 {
+	struct dummy_ref dref1 = {1234, 'A'}, dref2 = {431, 'Z'};
+
 	assembler assem;
 	symbol *moo = NULL;
-	instruction *inst1 = default_instruction_make("mov");
-	instruction *inst2 = default_instruction_make("prn");
 
 	table_init(&assem.sym_table);
 
@@ -92,17 +97,14 @@ static int __TEST_symbol_table(void)
 	table_traverse(&assem.sym_table, __print_symbols);
 
 	moo = table_find_symbol(&assem.sym_table, "MOO");
-	table_add_reference(moo, inst1);
-	table_add_reference(moo, inst2);
+	table_add_reference(moo, &dref1);
+	table_add_reference(moo, &dref2);
 
 	table_consume_references(moo, __print_refs);
 
 	table_destroy(&assem.sym_table);
 
 	test_assert(assem.sym_table.root_node == NULL, "table not destroyed properly.");
-
-	default_instruction_destroy(inst1);
-	default_instruction_destroy(inst2);
 
 	return TEST_SUCCESS;
 }
@@ -177,7 +179,7 @@ static int __TEST_list_test_empty(void)
 	Add new tests here. */
 #define TEST_LIST(list_entry)		\
 	list_entry(default_input)		\
-	list_entry(instruction_make)	\
+	list_entry(default_instruction_make)	\
 	list_entry(symbol_table)		\
 	list_entry(list_test)			\
 	list_entry(list_test_empty)
