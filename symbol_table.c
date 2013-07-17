@@ -5,8 +5,8 @@
 #define table_insert(table, new) tree_insert(table, new, __table_compare_symbols)
 
 struct orphaned_reference {
-	struct instruction	*inst;
-	list 				refs;
+	void *inst;
+	list refs;
 };
 
 /* Delete a single element from the tree. */
@@ -104,7 +104,7 @@ void table_traverse(symbol_table *table, table_visit_func visit)
 	tree_traverse(table, visit);
 }
 
-int table_add_reference(symbol *sym, struct instruction *inst)
+int table_add_reference(symbol *sym, void *inst)
 {
 	struct orphaned_reference *ref;
 

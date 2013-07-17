@@ -12,10 +12,10 @@ typedef struct input_context {
 } input_context;
 
 typedef struct input_ops {
-		input_context*	(*input_init)		(char* file_name);
-		char*			(*input_get_line)	(input_context* in);
-		void			(*input_destroy_line)(input_context* in);
-		void			(*input_destroy)	(input_context* in);
+	input_context*	(*input_init)		(char* file_name);
+	char*			(*input_get_line)	(input_context* in);
+	void			(*input_destroy_line)(input_context* in);
+	void			(*input_destroy)	(input_context* in);
 } input_ops;
 
 #endif

@@ -65,8 +65,9 @@ static void __print_symbols(table_element *element)
 		printf("SYMBOL: %s TYPE: %d\n", sym->name, sym->type);
 }
 
-static void __print_refs(instruction *inst)
+static void __print_refs(void *ref)
 {
+	instruction *inst = ref; /* Converting from void* implicitly is fine.*/
 	printf("REF: %s\n", inst->proto->name);
 }
 

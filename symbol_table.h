@@ -4,7 +4,6 @@
 
 #include "intrusive_list.h"
 #include "intrusive_tree.h"
-#include "translate.h"
 
 #define SYMBOL_MAX_LENGTH 30
 
@@ -34,7 +33,7 @@ typedef struct symbol {
 		/*	Prototype for function handling each symbol in the table in traversal. */
 typedef void (*table_visit_func)(table_element *symbol);
 		/*	Prototype for function handling each instruction in a reference list in traversal. */
-typedef void (*table_consume_func)(instruction *inst);
+typedef void (*table_consume_func)(void *inst);
 
 		/*	Table initializer. Must be called after allocation. */
 void	table_init(symbol_table* table);
@@ -51,7 +50,7 @@ void	table_traverse(symbol_table *table, table_visit_func visit);
 		/*	Add a new orphaned reference to a symbol.
 			Returns 1 on success or 0 on error. This is because I don't
 			want to expose the implementation of references to the client. */
-int	table_add_reference(symbol *sym, struct instruction *inst);
+int		table_add_reference(symbol *sym, void *inst);
 		/*	Iterate over the references to a symbol, deleting them as we go. */
 void	table_consume_references(symbol *sym, table_consume_func consume);
 
