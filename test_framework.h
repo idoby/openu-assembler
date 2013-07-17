@@ -1,3 +1,5 @@
+#include "tests.h"
+
 #define TEST_NAME_LEN 30
 
 #define S(s) #s
@@ -25,11 +27,6 @@
 	} while(0)
 
 typedef int (*test_func)(void);
-
-enum test_error {
-	TEST_SUCCESS,
-	TEST_FAILURE
-};
 
 struct test {
 	char name[TEST_NAME_LEN + 1];

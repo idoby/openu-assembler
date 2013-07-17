@@ -20,9 +20,13 @@ static void __print_test_header(struct test *t, int num, int max)
 	}*/
 }
 
-static void __print_test_result(struct test *t)
+static int __print_test_result(struct test *t)
 {
-	printf("RESULT: %s\n", (t->func() == TEST_SUCCESS) ? FORMAT_GREEN(S(TEST_SUCCESS)) : FORMAT_RED(S(TEST_FAILURE)));
+	int result = t->func();
+
+	printf("RESULT: %s\n", (result == TEST_SUCCESS) ? FORMAT_GREEN(S(TEST_SUCCESS)) : FORMAT_RED(S(TEST_FAILURE)));
+
+	return result;	
 }
 
 static void __print_test_footer(void)
@@ -30,10 +34,11 @@ static void __print_test_footer(void)
 	putchar('\n');
 }
 
-void run_tests(void)
+test_error run_tests(void)
 {
 	struct test *t = &tests[0];
 	int i = 1;
+	test_error result = TEST_SUCCESS;
 	int max_tests = sizeof(tests) / sizeof(tests[0]) - 1;
 
 	printf(FORMAT_BOLD(FORMAT_YELLOW("Testing framework: ")) "Running %d tests.\n\n", max_tests);
@@ -41,7 +46,10 @@ void run_tests(void)
 	for (; t->func != NULL; ++t, ++i)
 	{
 		__print_test_header(t, i, max_tests);
-		__print_test_result(t);
+		if (__print_test_result(t) == TEST_FAILURE)
+			result = TEST_FAILURE;
 		__print_test_footer();
 	}
+
+	return result;
 }

@@ -1,8 +1,13 @@
 #ifndef __TESTS_H
 #define __TESTS_H
 
+typedef enum test_error {
+	TEST_SUCCESS,
+	TEST_FAILURE
+} test_error;
+
 #ifdef RUN_TESTS
-void run_tests(void);
+test_error run_tests(void);
 #else
 #define run_tests() 
 #endif

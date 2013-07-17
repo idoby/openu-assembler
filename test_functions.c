@@ -5,6 +5,25 @@
 #include "symbol_table.h"
 #include "translate.h"
 #include "assembler.h"
+#include "default_input.h"
+
+static int __TEST_default_input(void)
+{
+	struct input_ops input = default_input_ops;
+
+	input_context* ic = input.input_init("ps");
+
+	test_assert(ic != NULL, "Failed to init input with \"ps.as\"!");
+
+	/* Read all lines. */
+	while (input.input_get_line(ic) != NULL);
+
+	printf("# of lines in test file: %d.\n", ic->line_number);
+
+	input.input_destroy(ic);
+
+	return TEST_SUCCESS;
+}
 
 static void __print_inst(instruction *inst)
 {
@@ -155,6 +174,7 @@ static int __TEST_list_test_empty(void)
 /*	The list of tests to be run.
 	Add new tests here. */
 #define TEST_LIST(list_entry)		\
+	list_entry(default_input)		\
 	list_entry(instruction_make)	\
 	list_entry(symbol_table)		\
 	list_entry(list_test)			\
