@@ -1,8 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "default_translate.h"
 
+#include "intrusive_list.h"
+#include "scratch_space.h"
 #include "symbol_table.h"
 
 enum addressing_mode {
@@ -15,6 +18,19 @@ enum addressing_mode {
 	NONE = 0,
 	ADDRESSING_MAX_MODE = REGISTER
 };
+
+typedef struct default_translate_context {
+	list *insts;
+	symbol_table *syms;
+	scratch_space *i_scratch;
+	scratch_space *d_scratch;
+} default_translate_context;
+
+translate_ops default_translate_ops = 
+				{	default_translate_init,
+					default_translate_destroy,
+					default_translate_line,
+					default_translate_finalize };
 
 #define INSTRUCTION_NAME_MAX_LEN 	4
 
@@ -55,6 +71,154 @@ typedef struct address {
 		unsigned int register_number;
 	} data;
 } address;
+
+#define PARSE_LOOP_GUARD(p) (*(p) != LINE_END && *(p) != '\0')
+
+static const char LINE_END			= '\n';
+static const char COMMENT_START 	= ';';
+static const char LABEL_INDICATOR	= ':';
+static const char DIRECTIVE_START	= '.';
+
+enum default_label_errors {
+	LABEL_NOT_FOUND,
+	LABEL_ALLOC_ERROR,
+	LABEL_TOO_LONG,
+	LABEL_INVALID,
+	LABEL_SUCCESS
+};
+
+translate_context*	default_translate_init
+					(list *insts, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
+{
+	default_translate_context *dtc;
+
+	if (insts == NULL || syms == NULL || i_scratch == NULL || d_scratch == NULL)
+		return NULL;
+
+	if ((dtc = malloc(sizeof(*dtc))) == NULL)
+		return NULL;
+	
+	dtc->insts	= insts;
+	dtc->syms	= syms;
+	dtc->i_scratch = i_scratch;
+	dtc->d_scratch = d_scratch;
+
+	return (translate_context*)dtc;
+}
+
+void default_translate_destroy(translate_context *tc)
+{
+	free(tc);
+	tc = tc; /* Nothing to do here, but keep compiler quiet. */
+}
+
+static char* __skip_whitespace(char *p)
+{
+	while (isspace(*p) && PARSE_LOOP_GUARD(p))
+		++p;
+
+	return p;
+}
+
+static enum default_label_errors __get_label(char *p, char **label)
+{
+	/* Lookahead to see if we're dealing with a label. */
+	char *p2 = p;
+	char *lp;
+
+	/* Does the line begin with the label indicator? That's bad! */
+	if (*p2 == LABEL_INDICATOR)
+		return LABEL_INVALID;
+
+	/* Or maybe with a non-alphanumeric character? Also bad! */
+	if (!isalpha(*p2))
+		return LABEL_NOT_FOUND;
+
+	/* Find the end of the label. */
+	while (isalnum(*p2) && PARSE_LOOP_GUARD(p2))
+		++p2;
+
+	/* We've found a label! */
+	if (*p2 != LABEL_INDICATOR)
+		return LABEL_NOT_FOUND;
+
+	/* Is it too long? */
+	if (p2 - p > SYMBOL_MAX_LENGTH)
+		return LABEL_TOO_LONG;
+
+	if ((*label = malloc(SYMBOL_MAX_LENGTH + 1)) == NULL)
+		return LABEL_ALLOC_ERROR;
+
+	/* Copy the symbol name. */
+	for (lp = *label; p != p2; ++p, ++lp)
+		*lp = *p;
+
+	/* Add the null terminator. */
+	*lp = '\0';
+
+	return LABEL_SUCCESS;
+}
+
+/*	The following two functions are the meat of this project.
+	It is not surprising, therefore, that they were written as late as possible. */
+translate_line_error default_translate_line(translate_context *tc, char *line, unsigned int line_number)
+{
+	char *p = line;
+	char *label = NULL;
+	translate_line_error ret_val = TRANSLATE_SUCCESS;
+
+	if (tc == NULL || line == NULL || line_number == 0)
+	{
+		ret_val = TRANSLATE_LINE_ERROR;
+		goto translate_line_exit;
+	}
+
+	/* Skip leading whitespace. */
+	p = __skip_whitespace(p);
+
+	/* A digit at the start of the line is never valid in this language. */
+	if (isdigit(*p))
+	{
+		ret_val = TRANSLATE_LINE_ERROR;
+		goto translate_line_exit;
+	}
+
+	/* A comment at the start of the line makes the whole line meaningless, */
+	/* but it is valid. */
+	if (*p == COMMENT_START)
+		goto translate_line_exit;
+
+	switch (__get_label(p, &label))
+	{
+		case LABEL_SUCCESS:		/* We've found a label! */
+			p += strlen(label) + 1;	/* Skip the label. */
+			break;
+		case LABEL_NOT_FOUND:	/* No label. This is fine. */
+			break;
+		case LABEL_ALLOC_ERROR:	/* There was an error in allocation. */
+		case LABEL_TOO_LONG:	/* If the label is too long, this line is invalid! */
+		case LABEL_INVALID:		/* An invalid label was found! */
+		default:
+			ret_val = TRANSLATE_LINE_ERROR;
+			goto translate_line_exit;
+	}
+
+	p = __skip_whitespace(p);
+
+	/* TODO: handle directives. */
+	/*if (*p == DIRECTIVE_START)*/
+
+translate_line_exit:
+
+	free(label);
+	return ret_val;
+}
+
+translate_error default_translate_finalize(translate_context *tc)
+{
+	tc = tc;
+	return TRANSLATE_SUCCESS;
+}
 
 static struct ins_prototype* __get_prototype(char* name)
 {
@@ -128,8 +292,8 @@ static address* __address_make(enum addressing_mode mode)
 			ad->data.register_number	= 0;
 			break;
 		default:
-			free(ad);	/*	Should never happen, but
-			ad = NULL;		of course, it's bound to. */
+			free(ad);	/*	Should never happen, but  */
+			ad = NULL;	/*	of course, it's bound to. */
 	}
 
 	return ad;

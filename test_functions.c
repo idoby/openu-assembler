@@ -10,9 +10,9 @@
 
 static int __TEST_default_input(void)
 {
-	struct input_ops input = default_input_ops;
+	input_ops input = default_input_ops;
 
-	input_context* ic = input.input_init("ps");
+	input_context *ic = input.input_init("ps");
 
 	test_assert(ic != NULL, "Failed to init input with \"ps.as\"!");
 
@@ -22,6 +22,35 @@ static int __TEST_default_input(void)
 	printf("# of lines in test file: %d.\n", input.input_get_line_number(ic));
 
 	input.input_destroy(ic);
+
+	return TEST_SUCCESS;
+}
+
+static int __TEST_default_translate(void)
+{
+	translate_ops trans = default_translate_ops;
+	translate_context *tc;
+	list insts;
+	symbol_table syms;
+	scratch_space s1, s2;
+
+	list_init(&insts);
+	table_init(&syms);
+
+	tc = trans.translate_init(&insts, &syms, &s1, &s2);
+
+	test_assert(trans.translate_line(tc, "    SYM: .data 7\n", 1) == TRANSLATE_LINE_SUCCESS,
+				"1st line not parsed successfully!");
+	test_assert(trans.translate_line(tc, "     .data 7\n", 2) == TRANSLATE_LINE_SUCCESS,
+				"2nd line not parsed successfully!");
+	test_assert(trans.translate_line(tc, "           : .data 7\n", 3) != TRANSLATE_LINE_SUCCESS,
+				"3rd line parsed successfully!");
+	test_assert(trans.translate_line(tc, "2lab:    .data \n", 4) != TRANSLATE_LINE_SUCCESS,
+				"4th line parsed successfully!");
+
+	table_destroy(&syms);
+
+	trans.translate_destroy(tc);
 
 	return TEST_SUCCESS;
 }
@@ -179,6 +208,7 @@ static int __TEST_list_test_empty(void)
 	Add new tests here. */
 #define TEST_LIST(list_entry)		\
 	list_entry(default_input)		\
+	list_entry(default_translate)	\
 	list_entry(default_instruction_make)	\
 	list_entry(symbol_table)		\
 	list_entry(list_test)			\

@@ -9,6 +9,6 @@ char*			default_input_get_line(input_context* in);
 unsigned int	default_input_get_line_number(input_context* in);
 void			default_input_destroy_line(input_context* in);
 
-extern struct input_ops default_input_ops;
+extern input_ops default_input_ops;
 
 #endif
