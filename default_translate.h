@@ -3,6 +3,8 @@
 
 #include "translate.h"
 
+#define MAX_OPERANDS				2
+
 typedef struct ins_prototype {
 	char *name;
 	unsigned int opcode;

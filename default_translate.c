@@ -47,11 +47,11 @@ typedef struct address {
 	union address_data {
 		int immediate_data;
 		symbol *direct_sym;
-		struct index_s
+		struct index_data
 		{
 			struct symbol *symbol;
 			struct address *index;
-		} index;
+		} index_data;
 		unsigned int register_number;
 	} data;
 } address;
@@ -93,13 +93,55 @@ instruction* default_instruction_make(char *name)
 	return inst;
 }
 
+static address* __address_make(enum addressing_mode mode)
+{
+	address *ad;
+
+	if (mode == NONE)
+		return NULL;
+
+	/* Hack to test if mode is only one of the valid members of the enum. */
+	if (!(mode & (mode - 1)) || mode > ADDRESSING_MAX_MODE)
+		return NULL;
+
+	/* Allocate some precious memory. */
+	if ((ad = malloc(sizeof(*ad))) == NULL)
+		return NULL;
+
+	/* Initialize the addressing type. */
+	ad->type = mode;
+
+	/* Initialize the appropriate fields based on the specified mode. */
+	switch (mode)
+	{
+		case IMMEDIATE:
+			ad->data.immediate_data		= 0;
+			break;
+		case DIRECT:
+			ad->data.direct_sym			= NULL;
+			break;
+		case INDEX:
+			ad->data.index_data.symbol	= NULL;
+			ad->data.index_data.index	= NULL;
+			break;
+		case REGISTER:
+			ad->data.register_number	= 0;
+			break;
+		default:
+			free(ad);	/*	Should never happen, but
+			ad = NULL;		of course, it's bound to. */
+	}
+
+	return ad;
+}
+
 static void __address_destroy(address *ad)
 {
 	if (ad == NULL)
 		return;
 
-	if (ad->type == INDEX && ad->data.index.index != NULL)
-		__address_destroy(ad->data.index.index);
+	if (ad->type == INDEX && ad->data.index_data.index != NULL)
+		__address_destroy(ad->data.index_data.index);
 
 	free(ad);
 }

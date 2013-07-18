@@ -5,8 +5,6 @@
 #include "symbol_table.h"
 #include "scratch_space.h"
 
-#define MAX_OPERANDS				2
-
 typedef void translate_context;
 
 typedef enum translate_error {
