@@ -8,12 +8,15 @@
 typedef void translate_context;
 
 typedef enum translate_line_error {
-	TRANSLATE_LINE_ERROR,
+	TRANSLATE_LINE_SYNTAX_ERROR,
+	TRANSLATE_LINE_ALLOC_ERROR,
+	TRANSLATE_LINE_BAD_PARAMS,
 	TRANSLATE_LINE_SUCCESS
 } translate_line_error;
 
 typedef enum translate_error {
 	TRANSLATE_SUCCESS,
+	TRANSLATE_BAD_PARAMS,
 	TRANSLATE_CANT_RESOLVE
 } translate_error;
 
@@ -25,6 +28,8 @@ typedef struct translate_ops {
 	void				(*translate_destroy)(translate_context *tc);
 						/* Translate a single line. */
 	translate_line_error(*translate_line)(translate_context *tc, char *line);
+						/* Is the program valid? Should we print errors or finalize? */
+	unsigned int		(*translate_is_program_valid)(translate_context* tc);
 						/* Finalize translation. At this point the data structures are ready for output. */
 	translate_error		(*translate_finalize)(translate_context *tc);
 } translate_ops;

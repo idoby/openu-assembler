@@ -83,8 +83,14 @@ static int __TEST_default_translate(void)
 	test_assert_parsed("       .extern label\n");
 	test_assert_parsed("    SYM: .extern word, s2h3i4t, a5sFRs");
 	test_assert_parsed(" 	 .extern word, s2h3_i4t, a5sFRs\n");
+	test_assert_parsed("r9:  .extern r8 ; should not pass because no :\n");
 
+
+	test_assert_not_parsed("r9  .extern r8 ; should not pass because no :\n");
 	test_assert_not_parsed(".extern 2invalid_label");
+	test_assert_not_parsed("  .extern r2 ; should not parse because r2 is a register\n");
+	test_assert_not_parsed("  .extern r2 ");
+	test_assert_not_parsed("r5:  .extern valid\n");
 
 	/* .entry tests */
 	test_assert_parsed(".entry some_label\n");
@@ -92,6 +98,20 @@ static int __TEST_default_translate(void)
 	test_assert_parsed(".entry word, s2h3_i4t, a5sFRs\n");
 
 	test_assert_not_parsed(".entry 2nvldlbl\n");
+
+	/* Instruction tests. */
+	test_assert_parsed("MAIN:	lea/0,0 STR{*LEN}, STRADD");
+	test_assert_parsed("MAIN:	lea / 0 	, 0   STR{*LEN}, STRADD");
+	test_assert_parsed("MAIN:	cmp /1 / 0 / 1 	, 0   STR{*LEN}, STRADD");
+	test_assert_parsed("MAIN:	cmp /1 / 0 / 1 	, 1   STR{*LEN}, STRADD");
+
+	test_assert_not_parsed("MAIN:	lea/,0 STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	lea / 0	,   STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	cmp /1 / 0  1 	, 0   STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	cmp /1 /0 , 1 	, 1   STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	cmp /0 /0/1 , 1 	, 1   STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	cmp    STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	cmp 0 /0/1 , 1 	, 1   STR{*LEN}, STRADD");
 
 	table_destroy(&syms);
 

@@ -21,6 +21,7 @@ enum addressing_mode {
 
 typedef struct default_translate_context {
 	unsigned int line_number;
+	unsigned int program_valid;
 	list *insts;
 	symbol_table *syms;
 	scratch_space *i_scratch;
@@ -31,6 +32,7 @@ translate_ops default_translate_ops =
 				{	default_translate_init,
 					default_translate_destroy,
 					default_translate_line,
+					default_is_program_valid,
 					default_translate_finalize };
 
 #define INSTRUCTION_NAME_MAX_LEN 	4
@@ -73,27 +75,32 @@ typedef struct address {
 	} data;
 } address;
 
+static const int  NUM_REGISTERS			= 8;
+static const char REGISTER_PREFIX		= 'r';
 static const char LINE_END				= '\n';
 static const char COMMENT_START 		= ';';
 static const char LABEL_INDICATOR		= ':';
 static const char DIRECTIVE_START		= '.';
 static const char SEPARATOR				= ',';
+
 static const char POSITIVE_INDICATOR	= '+';
 static const char NEGATIVE_INDICATOR	= '-';
+
 static const char STRING_DELIMITER		= '"';
+static const char INST_MOD_DELIMITER	= '/';
+
+static const char INST_MOD_DBL_TRUE		= '1';
+static const char INST_MOD_DBL_FALSE	= '0';
+
+static const char INST_MOD_TYPE_TRUE	= '1';
+static const char INST_MOD_TYPE_FALSE	= '0';
+static const char INST_MOD_RIGHT_BITS	= '1';
+static const char INST_MOD_LEFT_BITS	= '0';
 
 static const char DIRECTIVE_DATA[]		= "data";
 static const char DIRECTIVE_STRING[]	= "string";
 static const char DIRECTIVE_ENTRY[]		= "entry";
 static const char DIRECTIVE_EXTERN[]	= "extern";
-
-/*enum default_label_errors {
-	LABEL_NOT_FOUND,
-	LABEL_ALLOC_ERROR,
-	LABEL_TOO_LONG,
-	LABEL_INVALID,
-	LABEL_VALID
-};*/
 
 translate_context*	default_translate_init
 					(list *insts, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
@@ -106,7 +113,8 @@ translate_context*	default_translate_init
 	if ((dtc = malloc(sizeof(*dtc))) == NULL)
 		return NULL;
 	
-	dtc->line_number = 0;
+	dtc->line_number 	= 0;
+	dtc->program_valid	= 1;
 	dtc->insts	= insts;
 	dtc->syms	= syms;
 	dtc->i_scratch = i_scratch;
@@ -198,14 +206,31 @@ translate_line_error default_translate_line(translate_context *tc, char *line)
 	default_translate_context *dtc = tc;
 
 	if (dtc == NULL || line == NULL)
-		return TRANSLATE_LINE_ERROR;
+		return TRANSLATE_LINE_BAD_PARAMS;
 
 	++dtc->line_number;
 
-	if (__verify_line(dtc, line) == TRANSLATE_LINE_ERROR)
-		return TRANSLATE_LINE_ERROR;
+	if (__verify_line(dtc, line) == TRANSLATE_LINE_SYNTAX_ERROR)
+	{
+		dtc->program_valid = 0;
+		return TRANSLATE_LINE_SYNTAX_ERROR;
+	}
 
-	return __parse_line(dtc, line);
+	/* If the program is no longer valid, we don't parse anymore. */
+	if (dtc->program_valid)
+		return __parse_line(dtc, line);
+
+	return TRANSLATE_LINE_SUCCESS;
+}
+
+unsigned int default_is_program_valid(translate_context *tc)
+{
+	default_translate_context *dtc = tc;
+
+	if (dtc == NULL)
+		return 0;
+
+	return dtc->program_valid;
 }
 
 translate_error default_translate_finalize(translate_context *tc)
