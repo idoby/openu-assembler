@@ -3,6 +3,8 @@
 #define TEST_NAME_LEN 30
 
 #define S(s) #s
+#define S_(s) S(s)
+#define S__LINE__ S_(__LINE__)
 #define TEST_FUNC_NAME(test) __TEST_ ## test
 #define TEST_FUNC_PROTOTYPE(test) static int TEST_FUNC_NAME(test)(void);
 #define TEST_STRUCT_ENTRY(test) { #test, TEST_FUNC_NAME(test) },

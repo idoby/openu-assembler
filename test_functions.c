@@ -39,43 +39,59 @@ static int __TEST_default_translate(void)
 
 	tc = trans.translate_init(&insts, &syms, &s1, &s2);
 
-	/* Data tests. */
-	test_assert(trans.translate_line(tc, "    SYM: .data 7\n") == TRANSLATE_LINE_SUCCESS,
-				"Line NOT parsed successfully!");
-	test_assert(trans.translate_line(tc, "    lab2: .data -76   , 8\n") == TRANSLATE_LINE_SUCCESS,
-				"Line NOT parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data 12,78,-48\n") == TRANSLATE_LINE_SUCCESS,
-				"Line NOT parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data ") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, "     .data +7\n") == TRANSLATE_LINE_SUCCESS,
-				"line NOT parsed successfully!");
-	test_assert(trans.translate_line(tc, "           : .data 7\n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, "2lab:    .data \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data 8, \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data 8B \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data -8    B \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data 8B, \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data 45, +8B4 \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data ,45   \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
-	test_assert(trans.translate_line(tc, " .data 45  6 \n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
+#define test_assert_parsed(line)	\
+	do { test_assert(trans.translate_line(tc, (line)) == TRANSLATE_LINE_SUCCESS, \
+				"Line NOT parsed successfully: " S__LINE__); } while(0)
+
+#define test_assert_not_parsed(line)	\
+	do { test_assert(trans.translate_line(tc, (line)) != TRANSLATE_LINE_SUCCESS,	\
+				"Line parsed successfully: " S__LINE__); } while(0)
+
+	/* Comment tests. */
+	test_assert_parsed("       ; this is a dandy comment\n");
+	test_assert_parsed("       .entry a_label_appears ; this is a comment\n");
+	test_assert_not_parsed("       .extern a_label_appe, ;comment\n");
+
+	/* .data tests. */
+	test_assert_parsed("    SYM: .data 7 ; with a comment\n");
+	test_assert_parsed("    lab2: .data -76   , 8\n");
+	test_assert_parsed(" .data 12,78,-48\n");
+	test_assert_parsed("     .data +7\n");
+	test_assert_parsed("	.data 7, -2568"); /* No \n */
+
+	test_assert_not_parsed("	.data");
+	test_assert_not_parsed("	.data 7, \n");
+	test_assert_not_parsed(" .data \n");
+	test_assert_not_parsed(" .data ");
+	test_assert_not_parsed("           : .data 7\n");
+	test_assert_not_parsed("2lab:    .data \n");
+	test_assert_not_parsed(" .data 8, \n");
+	test_assert_not_parsed(" .data 8B \n");
+	test_assert_not_parsed(" .data -8    B \n");
+	test_assert_not_parsed(" .data 8B, \n");
+	test_assert_not_parsed(" .data 45, +8B4 \n");
+	test_assert_not_parsed(" .data ,45   \n");
+	test_assert_not_parsed(" .data 45  6 \n");
 
 	/* .string tests */
-	test_assert(trans.translate_line(tc, "    SYM: .string \"hello, stupid world!\"\n") == TRANSLATE_LINE_SUCCESS,
-				"Line NOT parsed successfully!");
-	test_assert(trans.translate_line(tc, "    lab2: .string \"hi   , 8\n") != TRANSLATE_LINE_SUCCESS,
-				"Line parsed successfully!");
+	test_assert_parsed("    SYM: .string \"hello, stupid world!\"\n");
+	test_assert_parsed("    SYM: .string \"hello, stupid; world!\", \"fuck this shit, dawg\"	 ; AND A COMMENT\n");
+	test_assert_parsed("    SYM: .string \"these	are 	tab 	separated!\", \"mother, 	fucker!\"\n");
+	test_assert_not_parsed("    lab2: .string \"hi   , 8\n");
+
+	/* .extern tests */
+	test_assert_parsed("       .extern label\n");
+	test_assert_parsed("    SYM: .extern word, s2h3i4t, a5sFRs");
+	test_assert_parsed(" 	 .extern word, s2h3_i4t, a5sFRs\n");
+
+	test_assert_not_parsed(".extern 2invalid_label");
+
+	/* .entry tests */
+	test_assert_parsed(".entry some_label\n");
+	test_assert_parsed("    SYM: .entry word, s2h3i---4t, a5sFRs");
+	test_assert_parsed(".entry word, s2h3_i4t, a5sFRs\n");
+
+	test_assert_not_parsed(".entry 2nvldlbl\n");
 
 	table_destroy(&syms);
 

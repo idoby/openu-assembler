@@ -87,13 +87,13 @@ static const char DIRECTIVE_STRING[]	= "string";
 static const char DIRECTIVE_ENTRY[]		= "entry";
 static const char DIRECTIVE_EXTERN[]	= "extern";
 
-enum default_label_errors {
+/*enum default_label_errors {
 	LABEL_NOT_FOUND,
 	LABEL_ALLOC_ERROR,
 	LABEL_TOO_LONG,
 	LABEL_INVALID,
 	LABEL_VALID
-};
+};*/
 
 translate_context*	default_translate_init
 					(list *insts, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
@@ -128,7 +128,8 @@ int __isblank(const int c)
 
 int __islineterm(const int c)
 {
-	return (c == '\n' || c == '\0');
+	/* A line can be terminated by a \n, a \0 or a ;. */
+	return (c == LINE_END || c == '\0' || c == COMMENT_START);
 }
 
 static const char* __skip_whitespace(const char *p)
@@ -142,6 +143,7 @@ static const char* __skip_whitespace(const char *p)
 	return p;
 }
 
+#if 0
 static enum default_label_errors __get_label(const char *p, char **label)
 {
 	/* Lookahead to see if we're dealing with a label. */
@@ -180,6 +182,7 @@ static enum default_label_errors __get_label(const char *p, char **label)
 
 	return LABEL_VALID;
 }
+#endif
 
 #include "default_translate_verify.c"
 
