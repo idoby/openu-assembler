@@ -39,14 +39,43 @@ static int __TEST_default_translate(void)
 
 	tc = trans.translate_init(&insts, &syms, &s1, &s2);
 
-	test_assert(trans.translate_line(tc, "    SYM: .data 7\n", 1) == TRANSLATE_LINE_SUCCESS,
-				"1st line not parsed successfully!");
-	test_assert(trans.translate_line(tc, "     .data 7\n", 2) == TRANSLATE_LINE_SUCCESS,
-				"2nd line not parsed successfully!");
-	test_assert(trans.translate_line(tc, "           : .data 7\n", 3) != TRANSLATE_LINE_SUCCESS,
-				"3rd line parsed successfully!");
-	test_assert(trans.translate_line(tc, "2lab:    .data \n", 4) != TRANSLATE_LINE_SUCCESS,
-				"4th line parsed successfully!");
+	/* Data tests. */
+	test_assert(trans.translate_line(tc, "    SYM: .data 7\n") == TRANSLATE_LINE_SUCCESS,
+				"Line NOT parsed successfully!");
+	test_assert(trans.translate_line(tc, "    lab2: .data -76   , 8\n") == TRANSLATE_LINE_SUCCESS,
+				"Line NOT parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data 12,78,-48\n") == TRANSLATE_LINE_SUCCESS,
+				"Line NOT parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data ") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, "     .data +7\n") == TRANSLATE_LINE_SUCCESS,
+				"line NOT parsed successfully!");
+	test_assert(trans.translate_line(tc, "           : .data 7\n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, "2lab:    .data \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data 8, \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data 8B \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data -8    B \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data 8B, \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data 45, +8B4 \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data ,45   \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+	test_assert(trans.translate_line(tc, " .data 45  6 \n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
+
+	/* .string tests */
+	test_assert(trans.translate_line(tc, "    SYM: .string \"hello, stupid world!\"\n") == TRANSLATE_LINE_SUCCESS,
+				"Line NOT parsed successfully!");
+	test_assert(trans.translate_line(tc, "    lab2: .string \"hi   , 8\n") != TRANSLATE_LINE_SUCCESS,
+				"Line parsed successfully!");
 
 	table_destroy(&syms);
 

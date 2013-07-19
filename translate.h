@@ -24,7 +24,7 @@ typedef struct translate_ops {
 						/* Module destructor. */
 	void				(*translate_destroy)(translate_context *tc);
 						/* Translate a single line. */
-	translate_line_error(*translate_line)(translate_context *tc, char *line, unsigned int line_number);
+	translate_line_error(*translate_line)(translate_context *tc, char *line);
 						/* Finalize translation. At this point the data structures are ready for output. */
 	translate_error		(*translate_finalize)(translate_context *tc);
 } translate_ops;

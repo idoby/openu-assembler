@@ -17,8 +17,8 @@ int main(int argc, char** argv)
 	while (--argc > 0)
 	{
 		/* Assemble the assembler! :D */
-		assembler ass;
-		ass.input_ops = default_input_ops;
+		/*assembler ass;
+		ass.input_ops = default_input_ops;*/
 
 		printf("%d\n", argc);
 		printf("%s\n", argv[argc]);

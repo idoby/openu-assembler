@@ -20,6 +20,7 @@ enum addressing_mode {
 };
 
 typedef struct default_translate_context {
+	unsigned int line_number;
 	list *insts;
 	symbol_table *syms;
 	scratch_space *i_scratch;
@@ -72,19 +73,26 @@ typedef struct address {
 	} data;
 } address;
 
-#define PARSE_LOOP_GUARD(p) (*(p) != LINE_END && *(p) != '\0')
+static const char LINE_END				= '\n';
+static const char COMMENT_START 		= ';';
+static const char LABEL_INDICATOR		= ':';
+static const char DIRECTIVE_START		= '.';
+static const char SEPARATOR				= ',';
+static const char POSITIVE_INDICATOR	= '+';
+static const char NEGATIVE_INDICATOR	= '-';
+static const char STRING_DELIMITER		= '"';
 
-static const char LINE_END			= '\n';
-static const char COMMENT_START 	= ';';
-static const char LABEL_INDICATOR	= ':';
-static const char DIRECTIVE_START	= '.';
+static const char DIRECTIVE_DATA[]		= "data";
+static const char DIRECTIVE_STRING[]	= "string";
+static const char DIRECTIVE_ENTRY[]		= "entry";
+static const char DIRECTIVE_EXTERN[]	= "extern";
 
 enum default_label_errors {
 	LABEL_NOT_FOUND,
 	LABEL_ALLOC_ERROR,
 	LABEL_TOO_LONG,
 	LABEL_INVALID,
-	LABEL_SUCCESS
+	LABEL_VALID
 };
 
 translate_context*	default_translate_init
@@ -98,6 +106,7 @@ translate_context*	default_translate_init
 	if ((dtc = malloc(sizeof(*dtc))) == NULL)
 		return NULL;
 	
+	dtc->line_number = 0;
 	dtc->insts	= insts;
 	dtc->syms	= syms;
 	dtc->i_scratch = i_scratch;
@@ -112,18 +121,31 @@ void default_translate_destroy(translate_context *tc)
 	tc = tc; /* Nothing to do here, but keep compiler quiet. */
 }
 
-static char* __skip_whitespace(char *p)
+int __isblank(const int c)
 {
-	while (isspace(*p) && PARSE_LOOP_GUARD(p))
+	return (c == '\t' || c == ' ');
+}
+
+int __islineterm(const int c)
+{
+	return (c == '\n' || c == '\0');
+}
+
+static const char* __skip_whitespace(const char *p)
+{
+	if (p == NULL)
+		return NULL;
+
+	while (__isblank(*p))
 		++p;
 
 	return p;
 }
 
-static enum default_label_errors __get_label(char *p, char **label)
+static enum default_label_errors __get_label(const char *p, char **label)
 {
 	/* Lookahead to see if we're dealing with a label. */
-	char *p2 = p;
+	const char *p2 = p;
 	char *lp;
 
 	/* Does the line begin with the label indicator? That's bad! */
@@ -135,7 +157,7 @@ static enum default_label_errors __get_label(char *p, char **label)
 		return LABEL_NOT_FOUND;
 
 	/* Find the end of the label. */
-	while (isalnum(*p2) && PARSE_LOOP_GUARD(p2))
+	while (isalnum(*p2) || __islineterm(*p2))
 		++p2;
 
 	/* We've found a label! */
@@ -156,62 +178,31 @@ static enum default_label_errors __get_label(char *p, char **label)
 	/* Add the null terminator. */
 	*lp = '\0';
 
-	return LABEL_SUCCESS;
+	return LABEL_VALID;
+}
+
+#include "default_translate_verify.c"
+
+static translate_line_error __parse_line(default_translate_context *tc, char *line)
+{
+	return TRANSLATE_LINE_SUCCESS;
 }
 
 /*	The following two functions are the meat of this project.
 	It is not surprising, therefore, that they were written as late as possible. */
-translate_line_error default_translate_line(translate_context *tc, char *line, unsigned int line_number)
+translate_line_error default_translate_line(translate_context *tc, char *line)
 {
-	char *p = line;
-	char *label = NULL;
-	translate_line_error ret_val = TRANSLATE_SUCCESS;
+	default_translate_context *dtc = tc;
 
-	if (tc == NULL || line == NULL || line_number == 0)
-	{
-		ret_val = TRANSLATE_LINE_ERROR;
-		goto translate_line_exit;
-	}
+	if (dtc == NULL || line == NULL)
+		return TRANSLATE_LINE_ERROR;
 
-	/* Skip leading whitespace. */
-	p = __skip_whitespace(p);
+	++dtc->line_number;
 
-	/* A digit at the start of the line is never valid in this language. */
-	if (isdigit(*p))
-	{
-		ret_val = TRANSLATE_LINE_ERROR;
-		goto translate_line_exit;
-	}
+	if (__verify_line(dtc, line) == TRANSLATE_LINE_ERROR)
+		return TRANSLATE_LINE_ERROR;
 
-	/* A comment at the start of the line makes the whole line meaningless, */
-	/* but it is valid. */
-	if (*p == COMMENT_START)
-		goto translate_line_exit;
-
-	switch (__get_label(p, &label))
-	{
-		case LABEL_SUCCESS:		/* We've found a label! */
-			p += strlen(label) + 1;	/* Skip the label. */
-			break;
-		case LABEL_NOT_FOUND:	/* No label. This is fine. */
-			break;
-		case LABEL_ALLOC_ERROR:	/* There was an error in allocation. */
-		case LABEL_TOO_LONG:	/* If the label is too long, this line is invalid! */
-		case LABEL_INVALID:		/* An invalid label was found! */
-		default:
-			ret_val = TRANSLATE_LINE_ERROR;
-			goto translate_line_exit;
-	}
-
-	p = __skip_whitespace(p);
-
-	/* TODO: handle directives. */
-	/*if (*p == DIRECTIVE_START)*/
-
-translate_line_exit:
-
-	free(label);
-	return ret_val;
+	return __parse_line(dtc, line);
 }
 
 translate_error default_translate_finalize(translate_context *tc)

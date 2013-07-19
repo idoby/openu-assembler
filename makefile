@@ -1,6 +1,6 @@
 SOURCES		= as.c intrusive_tree.c intrusive_list.c symbol_table.c default_input.c default_translate.c
 FLAGS		= -ansi -pedantic -Wall -Wextra -g -o as
-EXTRA_DEPS	= *.h
+EXTRA_DEPS	= *.h default_translate_verify.c
 WITH_TESTS = y
 
 ifeq ($(WITH_TESTS), y)
