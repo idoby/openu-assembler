@@ -61,8 +61,10 @@ static int __TEST_default_translate(void)
 
 	test_assert_not_parsed("	.data");
 	test_assert_not_parsed("	.data 7, \n");
+	test_assert_not_parsed("	.data 7, ;\n");
 	test_assert_not_parsed(" .data \n");
 	test_assert_not_parsed(" .data ");
+	test_assert_not_parsed(" .da;ta ");
 	test_assert_not_parsed("           : .data 7\n");
 	test_assert_not_parsed("2lab:    .data \n");
 	test_assert_not_parsed(" .data 8, \n");
@@ -77,6 +79,9 @@ static int __TEST_default_translate(void)
 	test_assert_parsed("    SYM: .string \"hello, stupid world!\"\n");
 	test_assert_parsed("    SYM: .string \"hello, stupid; world!\", \"fuck this shit, dawg\"	 ; AND A COMMENT\n");
 	test_assert_parsed("    SYM: .string \"these	are 	tab 	separated!\", \"mother, 	fucker!\"\n");
+
+	test_assert_not_parsed("   . string \"hello\"");
+	test_assert_not_parsed("   .string \"hello\" , ");
 	test_assert_not_parsed("    lab2: .string \"hi   , 8\n");
 
 	/* .extern tests */
@@ -86,6 +91,9 @@ static int __TEST_default_translate(void)
 	test_assert_parsed("r9:  .extern r8 ; should not pass because no :\n");
 
 
+	test_assert_not_parsed("stop: 	 .extern word, s2h3_i4t, a5sFRs\n");
+	test_assert_not_parsed("cmp: 	 .extern word, s2h3_i4t, a5sFRs\n");
+	test_assert_not_parsed("r5: 	 .extern word, s2h3_i4t, a5sFRs\n");
 	test_assert_not_parsed("r9  .extern r8 ; should not pass because no :\n");
 	test_assert_not_parsed(".extern 2invalid_label");
 	test_assert_not_parsed("  .extern r2 ; should not parse because r2 is a register\n");
@@ -98,15 +106,21 @@ static int __TEST_default_translate(void)
 	test_assert_parsed(".entry word, s2h3_i4t, a5sFRs\n");
 
 	test_assert_not_parsed(".entry 2nvldlbl\n");
+	test_assert_not_parsed(".entry stop");
+	test_assert_not_parsed(".entry awesome,stop");
 
 	/* Instruction tests. */
 	test_assert_parsed("MAIN:	lea/0,0 STR{*LEN}, STRADD");
 	test_assert_parsed("MAIN:	lea / 0 	, 0   STR{*LEN}, STRADD");
 	test_assert_parsed("MAIN:	cmp /1 / 0 / 1 	, 0   STR{*LEN}, STRADD");
-	test_assert_parsed("MAIN:	cmp /1 / 0 / 1 	, 1   STR{*LEN}, STRADD");
+	test_assert_parsed("   cmp /1 / 0 / 1 	, 1   STRADD, STRADD");
+	test_assert_parsed("MAIN:	cmp /1 / 0 / 1 	, 1   STR{*LEN}, #-876");
+	test_assert_parsed("MAIN:	cmp /1 / 0 / 1 	, 1   STR{*LEN}, # +876");
 
 	test_assert_not_parsed("MAIN:	lea/,0 STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	lea/0,0 STR{*LEN}, #-17");
 	test_assert_not_parsed("MAIN:	lea / 0	,   STR{*LEN}, STRADD");
+	test_assert_not_parsed("MAIN:	lea/0,0 STR{*LEN},#346"); /*Should not get parsed because of immediate operand. */
 	test_assert_not_parsed("MAIN:	cmp /1 / 0  1 	, 0   STR{*LEN}, STRADD");
 	test_assert_not_parsed("MAIN:	cmp /1 /0 , 1 	, 1   STR{*LEN}, STRADD");
 	test_assert_not_parsed("MAIN:	cmp /0 /0/1 , 1 	, 1   STR{*LEN}, STRADD");

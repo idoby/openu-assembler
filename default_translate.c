@@ -7,6 +7,7 @@
 #include "intrusive_list.h"
 #include "scratch_space.h"
 #include "symbol_table.h"
+#include "utils.h"
 
 enum addressing_mode {
 	IMMEDIATE 	= 1,
@@ -56,6 +57,8 @@ translate_ops default_translate_ops =
 	list_entry		(rts,	016,	0,			NONE,				NONE		)			\
 	list_entry		(stop,	017,	0,			NONE,				NONE		)
 
+#define for_each_instruction(inst) for ((inst) = inst_prototypes; (inst)->name != NULL; ++inst)
+
 #define INS_MAKE_PROTOTYPE(name, opcode, ops, src_modes, dst_modes)	\
 	{#name, (opcode), (ops), {(src_modes), (dst_modes)}},
 
@@ -76,12 +79,17 @@ typedef struct address {
 } address;
 
 static const int  NUM_REGISTERS			= 8;
+static const int  REGISTER_NAME_WIDTH	= 2;
 static const char REGISTER_PREFIX		= 'r';
 static const char LINE_END				= '\n';
 static const char COMMENT_START 		= ';';
 static const char LABEL_INDICATOR		= ':';
 static const char DIRECTIVE_START		= '.';
 static const char SEPARATOR				= ',';
+static const char IMMEDIATE_INDICATOR	= '#';
+static const char INDEX_START			= '{';
+static const char INDEX_END				= '}';
+static const char INDEX_LABEL_INDICATOR	= '*';
 
 static const char POSITIVE_INDICATOR	= '+';
 static const char NEGATIVE_INDICATOR	= '-';
@@ -239,14 +247,14 @@ translate_error default_translate_finalize(translate_context *tc)
 	return TRANSLATE_SUCCESS;
 }
 
-static struct ins_prototype* __get_prototype(char* name)
+static ins_prototype* __get_prototype(char* name)
 {
-	struct ins_prototype *insp = inst_prototypes;
+	ins_prototype *inst;
 
 	/* Look up the symbol by name. */
-	for (;insp->name != NULL; ++insp)
-		if (strcmp(name, insp->name) == 0)
-			return insp;
+	for_each_instruction(inst)
+		if (strncmp(name, inst->name, strlen(inst->name)) == 0)
+			return inst;
 
 	return NULL;
 }
