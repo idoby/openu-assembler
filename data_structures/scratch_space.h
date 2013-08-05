@@ -1,6 +1,6 @@
 #ifndef __SCRATCH_SPACE_H
 #define __SCRATCH_SPACE_H
-#include "utils.h"
+#include <utils.h>
 
 /* Size of memory space. */
 #define MAX_MEM 2000

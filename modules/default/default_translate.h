@@ -1,7 +1,7 @@
 #ifndef __DEFAULT_TRANSLATE_H
 #define __DEFAULT_TRANSLATE_H
 
-#include "translate.h"
+#include <modules/translate.h>
 
 #define MAX_OPERANDS				2
 
@@ -24,7 +24,7 @@ typedef struct instruction {
 } instruction;
 
 translate_context*	default_translate_init
-					(list *insts, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch);
+					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch);
 void				default_translate_destroy(translate_context *tc);
 translate_line_error default_translate_line(translate_context *tc, char *line);
 unsigned int		default_is_program_valid(translate_context *tc);

@@ -4,10 +4,10 @@
 
 #include "default_translate.h"
 
-#include "intrusive_list.h"
-#include "scratch_space.h"
-#include "symbol_table.h"
-#include "utils.h"
+#include <data_structures/intrusive_list.h>
+#include <data_structures/scratch_space.h>
+#include <data_structures/symbol_table.h>
+#include <utils.h>
 
 enum addressing_mode {
 	IMMEDIATE 	= 1,
@@ -111,11 +111,11 @@ static const char DIRECTIVE_ENTRY[]		= "entry";
 static const char DIRECTIVE_EXTERN[]	= "extern";
 
 translate_context*	default_translate_init
-					(list *insts, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
+					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
 {
 	default_translate_context *dtc;
 
-	if (insts == NULL || syms == NULL || i_scratch == NULL || d_scratch == NULL)
+	if (syms == NULL || i_scratch == NULL || d_scratch == NULL)
 		return NULL;
 
 	if ((dtc = malloc(sizeof(*dtc))) == NULL)
@@ -123,7 +123,6 @@ translate_context*	default_translate_init
 	
 	dtc->line_number 	= 0;
 	dtc->program_valid	= 1;
-	dtc->insts	= insts;
 	dtc->syms	= syms;
 	dtc->i_scratch = i_scratch;
 	dtc->d_scratch = d_scratch;
@@ -243,6 +242,16 @@ unsigned int default_is_program_valid(translate_context *tc)
 
 translate_error default_translate_finalize(translate_context *tc)
 {
+	default_translate_context *dtc = tc;
+
+	if (dtc == NULL)
+		return TRANSLATE_BAD_PARAMS;
+
+	if (!default_is_program_valid(tc))
+		return TRANSLATE_BAD_PROGRAM;
+
+	/* TODO: implement this function. */
+
 	tc = tc;
 	return TRANSLATE_SUCCESS;
 }

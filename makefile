@@ -1,27 +1,55 @@
-SOURCES		= as.c intrusive_tree.c intrusive_list.c symbol_table.c default_input.c default_translate.c
-FLAGS		= -ansi -pedantic -Wall -Wextra -g -o as
-EXTRA_DEPS	= *.h default_translate_verify.c
-WITH_TESTS = y
+# Some globals
+export CC 			= gcc
+export FLAGS		?= -ansi -pedantic -Wall -Wextra -g -I$(abspath .)
+export BUILD_SYSTEM_PATH ?= $(abspath makefile)
+export WITH_TESTS	?= y
 
-ifeq ($(WITH_TESTS), y)
-	FLAGS += -DRUN_TESTS
-	SOURCES += tests.c
-	EXTRA_DEPS += test_functions.c
+include defs.make
+
+# Turn all defined source files into the corresponding object file names
+OBJECTS = $(SOURCES:.c=.o)
+
+# If an executable target is defined, link all of the dependencies and output it
+ifneq ($(TARGET),)
+$(TARGET): $(SOURCE_DIRS) $(OBJECTS) $(EXTRA_DEPS)
+	$(CC) $(OBJECTS) -o $(TARGET)
+
+.DEFAULT_GOAL := $(TARGET)
 endif
 
-all: as
 
-as: $(SOURCES) $(EXTRA_DEPS)
-	gcc $(FLAGS) $(SOURCES)
+# If we have subdirs...
+ifneq ($(SOURCE_DIRS),)
+# Each dir has its own object file
+.PHONY: $(SOURCE_DIRS)
+$(SOURCE_DIRS):
+	make -j4 -C $@ -f $(BUILD_SYSTEM_PATH) $(notdir $@).o
 
-.PHONY: clean run_tests
+DIR_OBJECTS =	$(addsuffix .o,				\
+				$(join $(SOURCE_DIRS),		\
+				$(addprefix /,				\
+				$(notdir $(SOURCE_DIRS)))))
+OBJECTS += $(DIR_OBJECTS)
 
-clean:
-	rm as
+# And a clean target
+DIRS_CLEAN 	= $(addsuffix _clean,$(SOURCE_DIRS))
 
-run_tests: clean as valgrind_test
+.PHONY: $(DIRS_CLEAN)
+$(DIRS_CLEAN):
+	make -j4 -C $(patsubst %_clean,%,$@) -f $(BUILD_SYSTEM_PATH) clean
+endif
 
-valgrind_test:
-	clear; \
-	valgrind -v --track-origins=yes --leak-check=full --read-var-info=yes ./as 2> test_log_valgrind_errors; \
-	grep 'ERROR SUMMARY' test_log_valgrind_errors;
+# Actual cleaning command
+.PHONY: clean
+clean: $(DIRS_CLEAN)
+	rm -f $(OBJECTS) $(TARGET) $(MODULE_OUTPUT)
+	
+# Turn a source file into an object file
+.c.o:
+	$(CC) $(FLAGS) -c $< -o $@
+
+# Output an object file representing a whole subdirectory
+ifneq ($(MODULE_OUTPUT),)
+$(MODULE_OUTPUT): $(OBJECTS) $(EXTRA_DEPS)
+	ld -r $(OBJECTS) -o $@
+endif

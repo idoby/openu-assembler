@@ -2,7 +2,7 @@
 #ifndef __INTRUSIVE_LIST_H
 #define __INTRUSIVE_LIST_H
 
-#include "container_of.h"
+#include <container_of.h>
 
 typedef struct list {
 	struct list *next;
