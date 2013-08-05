@@ -2,7 +2,7 @@
 #ifndef __INTRUSIVE_TREE_H
 #define __INTRUSIVE_TREE_H
 
-#include "container_of.h"
+#include <container_of.h>
 
 typedef struct tree_node {
 	struct tree_node *left;

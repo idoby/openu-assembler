@@ -2,26 +2,26 @@
 	Functions beginning with __TEST_ are actual test functions. */
 #include <stdlib.h>
 #include <stdio.h>
-#include "symbol_table.h"
-#include "assembler.h"
+#include <data_structures/symbol_table.h>
+#include <assembler.h>
 
-#include "default_input.h"
-#include "default_translate.h"
+#include <modules/default/default_input.h>
+#include <modules/default/default_translate.h>
 
 static int __TEST_default_input(void)
 {
 	input_ops input = default_input_ops;
 
-	input_context *ic = input.input_init("ps");
+	input_context *ic = input.init("ps");
 
 	test_assert(ic != NULL, "Failed to init input with \"ps.as\"!");
 
 	/* Read all lines. */
-	while (input.input_get_line(ic) != NULL);
+	while (input.get_line(ic) != NULL);
 
-	printf("# of lines in test file: %d.\n", input.input_get_line_number(ic));
+	printf("# of lines in test file: %d.\n", input.get_line_number(ic));
 
-	input.input_destroy(ic);
+	input.destroy(ic);
 
 	return TEST_SUCCESS;
 }
@@ -30,14 +30,12 @@ static int __TEST_default_translate(void)
 {
 	translate_ops trans = default_translate_ops;
 	translate_context *tc;
-	list insts;
 	symbol_table syms;
 	scratch_space s1, s2;
 
-	list_init(&insts);
 	table_init(&syms);
 
-	tc = trans.translate_init(&insts, &syms, &s1, &s2);
+	tc = trans.init(&syms, &s1, &s2);
 
 #define test_assert_parsed(line)	\
 	do { test_assert(trans.translate_line(tc, (line)) == TRANSLATE_LINE_SUCCESS, \
@@ -129,7 +127,7 @@ static int __TEST_default_translate(void)
 
 	table_destroy(&syms);
 
-	trans.translate_destroy(tc);
+	trans.destroy(tc);
 
 	return TEST_SUCCESS;
 }

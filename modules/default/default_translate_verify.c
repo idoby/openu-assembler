@@ -282,6 +282,7 @@ static const char* __verify_instruction(const char *p)
 
 			/* Verify the modifiers after the instruction name. */
 			p = __verify_modifiers(p, inst);
+			
 			if (p == NULL)
 				return NULL;
 
