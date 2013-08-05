@@ -5,6 +5,7 @@
 #include "intrusive_list.h"
 #include "scratch_space.h"
 #include "symbol_table.h"
+#include "error.h"
 
 /* Operations struct definitions for each subsystem. */
 #include "input.h"
@@ -26,7 +27,23 @@ typedef struct assembler {
 	scratch_space 		i_scratch;		/* Scratch space for instructions. */
 	scratch_space 		d_scratch;		/* Scratch space for data. */
 	symbol_table 		sym_table;		/* Symbol table. */
-	list				instructions;	/* List of parsed instructions. */
+	list				errors;			/* List of errors in the parsed file. */
 } assembler;
+
+/* Initialize an assembler data structure. */
+void assembler_init(assembler *ass);
+
+/* Destroy the assembler object. */
+void assembler_destroy(assembler *ass);
+
+/* Process a file. */
+void assembler_process(assembler *ass, char* file_name);
+
+#define assembler_dispatch(ass, module_name)	\
+	do {	\
+		ass.input_ops = module_name ## input_ops;	\
+		ass.input_ops = module_name ## translate_ops;	\
+		ass.input_ops = module_name ## ouput_ops;	\
+	} while(0)
 
 #endif

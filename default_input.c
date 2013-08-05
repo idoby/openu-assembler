@@ -7,7 +7,6 @@
 #include "assembler.h"
 
 #define MAX_BUF 1024
-#define MAX_FILE_NAME 256
 
 typedef struct default_input_context {
 	char			file_name[MAX_FILE_NAME];
@@ -17,7 +16,12 @@ typedef struct default_input_context {
 } default_input_context;
 
 input_ops default_input_ops =
-		{default_input_init, default_input_get_line, default_input_get_line_number, default_input_destroy_line, default_input_destroy};
+		{	default_input_init,
+			default_input_get_real_file_name,
+			default_input_get_line,
+			default_input_get_line_number,
+			default_input_destroy_line,
+			default_input_destroy};
 
 static const char default_file_extension[] = ".as";
 static const size_t default_file_ext_len = sizeof(default_file_extension) - 1;
@@ -50,6 +54,16 @@ input_context* default_input_init(char *file_name)
 	}
 
 	return (input_context*)dic;
+}
+
+void default_input_get_real_file_name(input_context *ic, char file_name[MAX_FILE_NAME])
+{
+	default_input_context* dic = ic;
+
+	if (dic == NULL || file_name == NULL)
+		return;
+
+	strncpy(file_name, dic->file_name, MAX_FILE_NAME);
 }
 
 char* default_input_get_line(input_context *ic)

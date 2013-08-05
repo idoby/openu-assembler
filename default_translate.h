@@ -20,6 +20,7 @@ typedef struct instruction {
 	unsigned int comb;
 	struct address *operands[MAX_OPERANDS];	/* First is destination, second is source. */
 	list	insts;
+	unsigned int src_line;					/* Source line number in the input file. */
 } instruction;
 
 translate_context*	default_translate_init
