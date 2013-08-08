@@ -21,12 +21,12 @@ enum addressing_mode {
 };
 
 typedef struct default_translate_context {
-	unsigned int line_number;
-	unsigned int program_valid;
-	list *insts;
-	symbol_table *syms;
-	scratch_space *i_scratch;
-	scratch_space *d_scratch;
+	unsigned int 	line_number;
+	unsigned int 	program_valid;
+	list 			insts;
+	symbol_table 	*syms;
+	scratch_space 	*i_scratch;
+	scratch_space 	*d_scratch;
 } default_translate_context;
 
 translate_ops default_translate_ops = 
@@ -129,12 +129,23 @@ translate_context*	default_translate_init
 	dtc->i_scratch = i_scratch;
 	dtc->d_scratch = d_scratch;
 
+	list_init(&dtc->insts);
+
 	return (translate_context*)dtc;
 }
 
 void default_translate_destroy(translate_context *tc)
 {
+	instruction *current, *safe;
 	default_translate_context *dtc = tc;
+
+	if (dtc == NULL)
+		return;
+
+	/* Delete all instructions. */
+	list_for_each_entry_safe(&dtc->insts, current, safe, instruction, insts)
+		default_instruction_destroy(current);
+
 	free(dtc);
 }
 
