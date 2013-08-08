@@ -4,4 +4,10 @@
 2. A .string line may contain a list of strings:
 	.string "one string", "another one", "an many as i want"
 
-3. If a program contains a label that is defined as both an entry and an extern, the result is undefined.
+3. A label may also contain the characters _ and -:
+	A_LABEL: .data 7
+
+4. A .extern or .entry line may contain a list of labels:
+	.extern lab1, lab2, lab3, as_many_as_i_want
+
+5. If a program contains a label that is defined as extern and something else, the result is undefined.

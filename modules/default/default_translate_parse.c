@@ -5,6 +5,59 @@ typedef enum parse_label_error {
 	LABEL_NO_LABEL
 } parse_label_error;
 
+static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *syms, const char* label, symbol_type type)
+{
+	symbol *old_sym = NULL;
+	symbol *new_sym = NULL;
+
+	if (label == NULL)
+		return LABEL_NO_LABEL;
+
+	old_sym = table_find_symbol(syms, label);
+	if (old_sym != NULL)
+	{
+		if (!table_is_defined(old_sym))
+			new_sym = old_sym; /* This refers to an old undefined symbol, so we'll define it. */
+		else
+			return LABEL_EXISTS;
+	}
+
+	/*	Do we already have a symbol to work on?
+		If not, define a new one. */
+	if (new_sym == NULL)
+		new_sym = table_new_symbol(syms, label);
+
+	if (new_sym == NULL)
+		return LABEL_ALLOC_ERROR;
+
+	if (s != NULL)
+		table_set_address_space(new_sym, s, scratch_get_next_offset(s));
+
+	if (!table_is_entry(new_sym))
+		table_set_type(new_sym, type);
+
+	table_set_defined(new_sym);
+
+	return LABEL_SET;
+}
+
+static int __parse_label_define_internal(scratch_space *s, symbol_table *syms, const char *label)
+{
+	switch (__parse_label_assign(s, syms, label, INTERN))
+	{
+		case LABEL_EXISTS:
+			return 0; /* TODO: label is a duplicate, error message. */
+			break;
+		case LABEL_ALLOC_ERROR:
+			return 0; /* TODO: allocation error, message. */
+			break;
+		case LABEL_NO_LABEL:
+		case LABEL_SET:
+		default:
+			return 1; /* Everything is fine. */
+	}
+}
+
 static parse_label_error __parse_label(const char *p, char out_sym[SYMBOL_MAX_LENGTH + 1])
 {
 	unsigned int index = 0;
@@ -14,10 +67,11 @@ static parse_label_error __parse_label(const char *p, char out_sym[SYMBOL_MAX_LE
 	for (; (isalnum(*p2) || *p2 == '_' || *p2 == '-') && index < SYMBOL_MAX_LENGTH + 1; ++index, ++p2)
 		out_sym[index] = *p2;
 
+	out_sym[index] = '\0';
+
 	/* Do we have a label? */
 	if (*p2 == LABEL_INDICATOR)
 	{
-		out_sym[index] = '\0';
 	 	return LABEL_EXISTS;
 	}
 
@@ -68,67 +122,40 @@ static const char* __parse_string_list(scratch_space *s, const char *p)
 	}
 }
 
-static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *syms, const char* label, symbol_type type)
+static const char* __parse_label_list(default_translate_context *dtc, const char *p, symbol_type type)
 {
-	symbol *old_sym = NULL;
-	symbol *new_sym = NULL;
-
-	if (label == NULL)
-		return LABEL_NO_LABEL;
-
-	old_sym = table_find_symbol(syms, label);
-	if (old_sym != NULL)
+	while (1)
 	{
-		if (!table_is_defined(old_sym))
-			new_sym = old_sym; /* This refers to an old undefined symbol, so we'll define it. */
-		else
-			return LABEL_EXISTS;
+		char label[SYMBOL_MAX_LENGTH + 1] = {0};
+
+		p = __skip_whitespace(p);
+
+		/* Copy out label name. */
+		__parse_label(p, label);
+
+		/* Define the label, or quit if unsuccessful. */
+		switch (__parse_label_assign(NULL, dtc->syms, label, type))
+		{
+			case LABEL_ALLOC_ERROR:
+				return NULL; /* TODO: error message. */
+				break;
+			case LABEL_EXISTS:
+				return NULL; /* TODO: error message. */
+				break;
+			case LABEL_NO_LABEL:
+			case LABEL_SET:
+			default:
+				break; /* Everything is fine. */
+		}
+
+		p = __skip_whitespace(p + strlen(label));
+
+		/* If a comma is present, we need to consume one more number. */
+		if (*p != SEPARATOR || __islineterm(*p))
+			return p;
+
+		++p;
 	}
-
-	/*	Do we already have a symbol to work on?
-		If not, define a new one. */
-	if (new_sym == NULL)
-		new_sym = table_new_symbol(syms, label);
-
-	if (new_sym == NULL)
-		return LABEL_ALLOC_ERROR;
-
-	if (s != NULL)
-		table_set_address_space(new_sym, s, scratch_get_next_offset(s));
-
-	table_set_type(new_sym, type);
-	table_set_defined(new_sym);
-
-	return LABEL_SET;
-}
-
-static int __parse_label_define_internal(scratch_space *s, symbol_table *syms, const char *label)
-{
-	switch (__parse_label_assign(s, syms, label, INTERN))
-	{
-		case LABEL_EXISTS:
-			return 0; /* TODO: label is a duplicate, error message. */
-			break;
-		case LABEL_ALLOC_ERROR:
-			return 0; /* TODO: allocation error, message. */
-			break;
-		case LABEL_NO_LABEL:
-		case LABEL_SET:
-		default:
-			return 1; /* Everything is fine. */
-	}
-}
-
-static const char* __parse_directive_entry(default_translate_context *dtc, const char *p, const char *label)
-{
-	/* TODO: implement. */
-	return p;
-}
-
-static const char* __parse_directive_extern(default_translate_context *dtc, const char *p, const char *label)
-{
-	/* TODO: implement. */
-	return p;
 }
 
 static const char* __parse_directive(default_translate_context *dtc, const char *p, const char *label)
@@ -157,15 +184,15 @@ static const char* __parse_directive(default_translate_context *dtc, const char 
 	else if (is_directive(p, DIRECTIVE_EXTERN))
 	{
 		p = __skip_whitespace(p + strlen(DIRECTIVE_EXTERN));
-		return __parse_label_list(dtc->d_scratch, p, EXTERN);
+		return __parse_label_list(dtc, p, EXTERN);
 	}
 	else if (is_directive(p, DIRECTIVE_ENTRY))
 	{
 		p = __skip_whitespace(p + strlen(DIRECTIVE_ENTRY));
-		return __parse_label_list(dtc->d_scratch, p, ENTRY);
+		return __parse_label_list(dtc, p, ENTRY);
 	}
 
-	return NULL; /* This is not a valid directive line. */
+	return NULL; /* All paths must return to keep the compiler happy. */
 }
 
 static const char* __parse_instruction(default_translate_context *dtc, const char *p, const char *label)

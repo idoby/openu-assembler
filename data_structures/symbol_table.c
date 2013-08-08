@@ -168,3 +168,8 @@ int table_is_defined(symbol *sym)
 {
 	return sym == NULL ? 0 : sym->defined;
 }
+
+int table_is_entry(symbol *sym)
+{
+	return sym == NULL ? 0 : (sym->type == ENTRY);
+}
