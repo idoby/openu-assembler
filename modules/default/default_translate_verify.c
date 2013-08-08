@@ -203,16 +203,18 @@ static const char* __verify_operand(const char* p, unsigned int allowed)
 	/* The only thing we have left is a label or an index. */
 	else if ((p = __verify_label(p)) != NULL)
 	{
+		p = __skip_whitespace(p);
+		
 		if (*p == INDEX_START) /* An index. */
 		{
 			if ((allowed & INDEX) == 0)
 				return NULL;
 
-			++p;
+			p = __skip_whitespace(p + 1);
 
 			if (*p == INDEX_LABEL_INDICATOR) /* An index with a label offset. */
 			{
-				++p;
+				p = __skip_whitespace(p + 1);
 				if ((p = __verify_label(p)) == NULL)
 					return NULL;
 			}
@@ -220,6 +222,8 @@ static const char* __verify_operand(const char* p, unsigned int allowed)
 				p = __verify_register(p);
 			else if ((p = __verify_number(p)) == NULL) /* Otherwise this leaves a number. */
 				return NULL;
+
+			p = __skip_whitespace(p);
 
 			/* The index part must end with a }. */
 			if (*p != INDEX_END)

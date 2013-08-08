@@ -5,7 +5,7 @@ typedef enum parse_label_error {
 	LABEL_NO_LABEL
 } parse_label_error;
 
-static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *syms, const char* label, symbol_type type)
+static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int defined)
 {
 	symbol *old_sym = NULL;
 	symbol *new_sym = NULL;
@@ -36,14 +36,15 @@ static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *sy
 	if (!table_is_entry(new_sym))
 		table_set_type(new_sym, type);
 
-	table_set_defined(new_sym);
+	if (defined)
+		table_set_defined(new_sym);
 
 	return LABEL_SET;
 }
 
 static int __parse_label_define_internal(scratch_space *s, symbol_table *syms, const char *label)
 {
-	switch (__parse_label_assign(s, syms, label, INTERN))
+	switch (__parse_label_assign(s, syms, label, INTERN, 1))
 	{
 		case LABEL_EXISTS:
 			return 0; /* TODO: label is a duplicate, error message. */
@@ -133,8 +134,10 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 		/* Copy out label name. */
 		__parse_label(p, label);
 
-		/* Define the label, or quit if unsuccessful. */
-		switch (__parse_label_assign(NULL, dtc->syms, label, type))
+		/* 	Define the label, or quit if unsuccessful.
+		 	The label should be defined only if it's external.
+		 	Entry labels still require a definition in the file. */
+		switch (__parse_label_assign(NULL, dtc->syms, label, type, type == EXTERN))
 		{
 			case LABEL_ALLOC_ERROR:
 				return NULL; /* TODO: error message. */

@@ -11,3 +11,5 @@
 	.extern lab1, lab2, lab3, as_many_as_i_want
 
 5. If a program contains a label that is defined as extern and something else, the result is undefined.
+
+6. A label does not have to start at the first position in a line and may be preceded by whitespace.

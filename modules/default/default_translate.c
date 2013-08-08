@@ -39,21 +39,21 @@ translate_ops default_translate_ops =
 #define INSTRUCTION_NAME_MAX_LEN 	4
 
 #define INSTRUCTION_LIST(list_entry)	\
-					/*name	opcode	#operands	src allowed modes	dst allowed modes. */	\
+					/*name	opcode	#operands	1st allowed modes	2nd allowed modes. */	\
 	list_entry		(mov,	00,		2,			ALL,				NO_IMMEDIATE)			\
 	list_entry		(cmp,	01,		2,			ALL,				ALL			)			\
 	list_entry		(add,	02,		2,			ALL,				NO_IMMEDIATE)			\
 	list_entry		(sub,	03,		2,			ALL,				NO_IMMEDIATE)			\
-	list_entry		(not,	04,		1,			NONE,				NO_IMMEDIATE)			\
-	list_entry		(clr,	05,		1,			NONE,				NO_IMMEDIATE)			\
+	list_entry		(not,	04,		1,			NO_IMMEDIATE,		NONE		)			\
+	list_entry		(clr,	05,		1,			NO_IMMEDIATE,		NONE		)			\
 	list_entry		(lea,	06,		2,			NO_IMMEDIATE,		NO_IMMEDIATE)			\
-	list_entry		(inc,	07,		1,			NONE,				NO_IMMEDIATE)			\
-	list_entry		(dec,	010,	1,			NONE,				NO_IMMEDIATE)			\
-	list_entry		(jmp,	011,	1,			NONE,				NO_IMMEDIATE)			\
-	list_entry		(bne,	012,	1,			NONE,				NO_IMMEDIATE)			\
-	list_entry		(red,	013,	1,			NONE,				NO_IMMEDIATE)			\
-	list_entry		(prn,	014,	1,			NONE,				ALL			)			\
-	list_entry		(jsr,	015,	1,			NONE,				IMMEDIATE	)			\
+	list_entry		(inc,	07,		1,			NO_IMMEDIATE,		NONE		)			\
+	list_entry		(dec,	010,	1,			NO_IMMEDIATE,		NONE		)			\
+	list_entry		(jmp,	011,	1,			NO_IMMEDIATE,		NONE		)			\
+	list_entry		(bne,	012,	1,			NO_IMMEDIATE,		NONE		)			\
+	list_entry		(red,	013,	1,			NO_IMMEDIATE,		NONE		)			\
+	list_entry		(prn,	014,	1,			ALL,				NONE		)			\
+	list_entry		(jsr,	015,	1,			IMMEDIATE,			NONE		)			\
 	list_entry		(rts,	016,	0,			NONE,				NONE		)			\
 	list_entry		(stop,	017,	0,			NONE,				NONE		)
 
