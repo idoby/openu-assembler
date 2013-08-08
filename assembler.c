@@ -6,7 +6,8 @@ void assembler_init(assembler *ass)
 	if (ass == NULL)
 		return;
 
-	/* TODO: init scratch spaces. */
+	scratch_init(&ass->i_scratch);
+	scratch_init(&ass->d_scratch);
 
 	list_init(&ass->errors);
 	table_init(&ass->sym_table);
@@ -24,7 +25,6 @@ void assembler_process(assembler *ass, char* file_name)
 	char* line = NULL;
 	char real_file_name[MAX_FILE_NAME] = {0};
 
-	/* TODO: Implement this module. */
 	if (ass == NULL || file_name == NULL)
 		return;
 
@@ -58,7 +58,10 @@ void assembler_process(assembler *ass, char* file_name)
 
 	/* We no longer need the input and translation modules at this point. */
 	ass->input_ops.destroy(ass->ic);
+	ass->ic = NULL;
+	
 	ass->translate_ops.destroy(ass->tc);
+	ass->tc = NULL;
 
 	if (program_valid && finalize_result == TRANSLATE_SUCCESS)
 		ass->output_ops.dump(ass->oc);
@@ -68,12 +71,24 @@ void assembler_process(assembler *ass, char* file_name)
 	}
 
 	ass->output_ops.destroy(ass->oc);
+	ass->oc = NULL;
 }
 
 void assembler_destroy(assembler *ass)
 {
 	error *err, *safe;
+	if (ass == NULL)
+		return;
 	/* TODO: destroy scratch spaces. */
+
+	ass->input_ops.destroy(ass->ic);
+	ass->ic = NULL;
+	
+	ass->translate_ops.destroy(ass->tc);
+	ass->tc = NULL;
+
+	ass->output_ops.destroy(ass->oc);
+	ass->oc = NULL;
 
 	table_destroy(&ass->sym_table);
 

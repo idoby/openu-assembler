@@ -28,7 +28,7 @@ typedef struct translate_ops {
 						/* Module destructor. */
 	void				(*destroy)(translate_context *tc);
 						/* Translate a single line. */
-	translate_line_error(*translate_line)(translate_context *tc, char *line);
+	translate_line_error(*translate_line)(translate_context *tc, const char *line);
 						/* Is the program valid? Should we print errors or finalize? */
 	unsigned int		(*is_program_valid)(translate_context* tc);
 						/* Finalize translation. At this point the data structures are ready for output. */

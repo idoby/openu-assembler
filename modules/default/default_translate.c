@@ -110,6 +110,8 @@ static const char DIRECTIVE_STRING[]	= "string";
 static const char DIRECTIVE_ENTRY[]		= "entry";
 static const char DIRECTIVE_EXTERN[]	= "extern";
 
+#define is_directive(p,d) (strncmp((p), (d), strlen((d))) == 0)
+
 translate_context*	default_translate_init
 					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
 {
@@ -132,8 +134,8 @@ translate_context*	default_translate_init
 
 void default_translate_destroy(translate_context *tc)
 {
-	free(tc);
-	tc = tc; /* Nothing to do here, but keep compiler quiet. */
+	default_translate_context *dtc = tc;
+	free(dtc);
 }
 
 int __isblank(const int c)
@@ -147,6 +149,11 @@ int __islineterm(const int c)
 	return (c == LINE_END || c == '\0' || c == COMMENT_START);
 }
 
+int __isstringchar(const int c)
+{
+	return (isprint(c) || c == '\t');
+}
+
 static const char* __skip_whitespace(const char *p)
 {
 	if (p == NULL)
@@ -158,57 +165,12 @@ static const char* __skip_whitespace(const char *p)
 	return p;
 }
 
-#if 0
-static enum default_label_errors __get_label(const char *p, char **label)
-{
-	/* Lookahead to see if we're dealing with a label. */
-	const char *p2 = p;
-	char *lp;
-
-	/* Does the line begin with the label indicator? That's bad! */
-	if (*p2 == LABEL_INDICATOR)
-		return LABEL_INVALID;
-
-	/* Or maybe with a non-alphanumeric character? Also bad! */
-	if (!isalpha(*p2))
-		return LABEL_NOT_FOUND;
-
-	/* Find the end of the label. */
-	while (isalnum(*p2) || __islineterm(*p2))
-		++p2;
-
-	/* We've found a label! */
-	if (*p2 != LABEL_INDICATOR)
-		return LABEL_NOT_FOUND;
-
-	/* Is it too long? */
-	if (p2 - p > SYMBOL_MAX_LENGTH)
-		return LABEL_TOO_LONG;
-
-	if ((*label = malloc(SYMBOL_MAX_LENGTH + 1)) == NULL)
-		return LABEL_ALLOC_ERROR;
-
-	/* Copy the symbol name. */
-	for (lp = *label; p != p2; ++p, ++lp)
-		*lp = *p;
-
-	/* Add the null terminator. */
-	*lp = '\0';
-
-	return LABEL_VALID;
-}
-#endif
-
 #include "default_translate_verify.c"
-
-static translate_line_error __parse_line(default_translate_context *tc, char *line)
-{
-	return TRANSLATE_LINE_SUCCESS;
-}
+#include "default_translate_parse.c"
 
 /*	The following two functions are the meat of this project.
 	It is not surprising, therefore, that they were written as late as possible. */
-translate_line_error default_translate_line(translate_context *tc, char *line)
+translate_line_error default_translate_line(translate_context *tc, const char *line)
 {
 	default_translate_context *dtc = tc;
 
@@ -224,7 +186,7 @@ translate_line_error default_translate_line(translate_context *tc, char *line)
 	}
 
 	/* If the program is no longer valid, we don't parse anymore. */
-	if (dtc->program_valid)
+	if (default_is_program_valid(tc))
 		return __parse_line(dtc, line);
 
 	return TRANSLATE_LINE_SUCCESS;
@@ -252,7 +214,6 @@ translate_error default_translate_finalize(translate_context *tc)
 
 	/* TODO: implement this function. */
 
-	tc = tc;
 	return TRANSLATE_SUCCESS;
 }
 

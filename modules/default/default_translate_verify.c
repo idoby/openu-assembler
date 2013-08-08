@@ -82,7 +82,7 @@ static const char* __verify_string(const char *p)
 
 	/* A string contains any printable character but ". */
 	/* Tab is allowed in the string too but isn't caught by isprint(). */
-	while ((isprint(*p) || *p == '\t') && *p != STRING_DELIMITER)
+	while (__isstringchar(*p) && *p != STRING_DELIMITER)
 		++p;
 
 	/* It then must end with another ". */
@@ -117,20 +117,14 @@ static const char* __verify_list(const char *p, const char* (*consume)(const cha
 		++p;
 	}
 
-	/*if (!__islineterm(*p))
-		return NULL;*/
-
 	return p;
 }
 
 static const char* __verify_directive(const char *p)
 {
-#define is_directive(p,d) (strncmp((p), (d), strlen((d))) == 0)
-
 	if (is_directive(p, DIRECTIVE_DATA))
 	{
-		/* Skip the directive name. */
-		p += strlen(DIRECTIVE_DATA);
+		p += strlen(DIRECTIVE_DATA); /* Skip the directive name. */
 		return __verify_list(p, __verify_number);
 	}
 	else if (is_directive(p, DIRECTIVE_STRING))
@@ -150,7 +144,6 @@ static const char* __verify_directive(const char *p)
 	}
 
 	return NULL; /* This is not a valid directive line. */
-#undef is_directive
 }
 
 static const char* __verify_modifiers(const char *p, ins_prototype *proto)
@@ -297,9 +290,8 @@ static const char* __verify_instruction(const char *p)
 	return NULL;
 }
 
-static translate_line_error __verify_line(default_translate_context *tc, const char *line)
+static translate_line_error __verify_line(default_translate_context *dtc, const char *p)
 {
-	const char *p = line;
 	const char *q;
 
 	p = __skip_whitespace(p);

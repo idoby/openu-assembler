@@ -54,7 +54,7 @@ static int __table_compare_symbols(tree_node *e1, tree_node* e2)
 	return 0;
 }
 
-symbol* table_new_symbol(symbol_table* table, const char* name, symbol_type type)
+symbol* table_new_symbol(symbol_table* table, const char* name)
 {
 	symbol *sym;
 
@@ -62,9 +62,10 @@ symbol* table_new_symbol(symbol_table* table, const char* name, symbol_type type
 		return NULL;
 
 	/* Initialize the new symbol object. */
-	sym->type = type;
-	sym->address_space = NULL;
-	sym->address_offset = 0;
+	sym->type			= INTERN;
+	sym->defined		= 0;
+	sym->address_space	= NULL;
+	sym->address_offset	= 0;
 	strncpy(sym->name, name, SYMBOL_MAX_LENGTH + 1);
 	sym->name[SYMBOL_MAX_LENGTH] = '\0';
 	list_init(&sym->orphaned_references);
@@ -136,4 +137,34 @@ void table_consume_references(symbol *sym, table_consume_func consume)
 		list_remove(&ref->refs);
 		free(ref);
 	}
+}
+
+void table_set_address_space(symbol *sym, struct scratch_space *s, unsigned int offset)
+{
+	if (sym == NULL || s == NULL)
+		return;
+
+	sym->address_space	= s;
+	sym->address_offset	= offset;
+}
+
+void table_set_type(symbol *sym, symbol_type type)
+{
+	if (sym == NULL)
+		return;
+
+	sym->type = type;
+}
+
+void table_set_defined(symbol *sym)
+{
+	if (sym == NULL)
+		return;
+
+	sym->defined = 1;
+}
+
+int table_is_defined(symbol *sym)
+{
+	return sym == NULL ? 0 : sym->defined;
 }

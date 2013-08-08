@@ -10,8 +10,7 @@
 typedef enum symbol_type {
 	ENTRY,
 	EXTERN,
-	INTERN,
-	INTERN_UNDEFINED
+	INTERN
 } symbol_type;
 
 typedef tree_node table_element;
@@ -20,6 +19,7 @@ typedef tree symbol_table;
 typedef struct symbol {
 	char 					name[SYMBOL_MAX_LENGTH + 1];	/* +1 for null terminator, of course. */
 	symbol_type				type;
+	unsigned int			defined;
 	struct scratch_space	*address_space;			/* Pointer to where this symbol refers to. */
 													/* Just a pointer, no need to include the actual declaration. */
 	unsigned int			address_offset;			/* Offset within the address space. */
@@ -38,10 +38,18 @@ typedef void (*table_consume_func)(void *inst);
 		/*	Table initializer. Must be called after allocation. */
 void	table_init(symbol_table* table);
 		/*	Insert a new symbol into the table. */
-symbol*	table_new_symbol(symbol_table* table, const char* name, symbol_type type);
+symbol*	table_new_symbol(symbol_table* table, const char* name);
 		/*	Look up a symbol in the table by name.
 			Returns a pointer to the new symbol. */
 symbol*	table_find_symbol(symbol_table* table, const char* name);
+		/* Sets the address space and offset for a symbol. */
+void	table_set_address_space(symbol *sym, struct scratch_space *s, unsigned int offset);
+		/* Sets the type for a symbol. */
+void	table_set_type(symbol *sym, symbol_type type);
+		/* Sets a symbol to be defined. */
+void	table_set_defined(symbol *sym);
+		/* Returns 1 if symbol is defined. */
+int		table_is_defined(symbol *sym);
 		/*	Table destructor. Frees up all the memory. Remember to call! */
 void 	table_destroy(symbol_table *table);
 		/*	Iterates over all symbols in the table. */

@@ -1,0 +1,7 @@
+1. A comment may appear at the end of a valid line:
+	.data 7 ; comment
+
+2. A .string line may contain a list of strings:
+	.string "one string", "another one", "an many as i want"
+
+3. If a program contains a label that is defined as both an entry and an extern, the result is undefined.

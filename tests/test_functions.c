@@ -7,6 +7,7 @@
 
 #include <modules/default/default_input.h>
 #include <modules/default/default_translate.h>
+#include <modules/default/default_output.h>
 
 static int __TEST_default_input(void)
 {
@@ -26,24 +27,29 @@ static int __TEST_default_input(void)
 	return TEST_SUCCESS;
 }
 
+static int __default_translate_test_line(const char *line, int should_pass, const char *message)
+{
+	assembler ass;
+
+	assembler_init(&ass);
+	assembler_dispatch(ass, default);
+	ass.tc = ass.translate_ops.init(&ass.sym_table, &ass.i_scratch, &ass.d_scratch);
+
+	test_assert((ass.translate_ops.translate_line(ass.tc, line) == TRANSLATE_LINE_SUCCESS) == should_pass,
+				message);
+
+	assembler_destroy(&ass);
+
+	return TEST_SUCCESS;
+}
+
 static int __TEST_default_translate(void)
 {
-	translate_ops trans = default_translate_ops;
-	translate_context *tc;
-	symbol_table syms;
-	scratch_space s1, s2;
-
-	table_init(&syms);
-
-	tc = trans.init(&syms, &s1, &s2);
-
 #define test_assert_parsed(line)	\
-	do { test_assert(trans.translate_line(tc, (line)) == TRANSLATE_LINE_SUCCESS, \
-				"Line NOT parsed successfully: " S__LINE__); } while(0)
+	do { __default_translate_test_line((line), 1, "Line NOT parsed successfully: " S__LINE__); } while(0)
 
 #define test_assert_not_parsed(line)	\
-	do { test_assert(trans.translate_line(tc, (line)) != TRANSLATE_LINE_SUCCESS,	\
-				"Line parsed successfully: " S__LINE__); } while(0)
+	do { __default_translate_test_line((line), 0, "Line parsed successfully: " S__LINE__); } while(0)
 
 	/* Comment tests. */
 	test_assert_parsed("       ; this is a dandy comment\n");
@@ -125,10 +131,6 @@ static int __TEST_default_translate(void)
 	test_assert_not_parsed("MAIN:	cmp    STR{*LEN}, STRADD");
 	test_assert_not_parsed("MAIN:	cmp 0 /0/1 , 1 	, 1   STR{*LEN}, STRADD");
 
-	table_destroy(&syms);
-
-	trans.destroy(tc);
-
 	return TEST_SUCCESS;
 }
 
@@ -192,10 +194,10 @@ static int __TEST_symbol_table(void)
 
 	table_init(&assem.sym_table);
 
-	table_new_symbol(&assem.sym_table, "MOO", EXTERN);
-	table_new_symbol(&assem.sym_table, "MEEEEEEH", INTERN);
-	table_new_symbol(&assem.sym_table, "ZZZZZZZZZZZ", INTERN_UNDEFINED);
-	table_new_symbol(&assem.sym_table, "A symbol with more than 30 characters should get truncated", INTERN_UNDEFINED);
+	table_new_symbol(&assem.sym_table, "MOO");
+	table_new_symbol(&assem.sym_table, "MEEEEEEH");
+	table_new_symbol(&assem.sym_table, "ZZZZZZZZZZZ");
+	table_new_symbol(&assem.sym_table, "A symbol with more than 30 characters should get truncated");
 
 	test_assert(table_find_symbol(&assem.sym_table, "MOO") != NULL, "symbol 'MOO' not found.");
 	test_assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL, "non-existent symbol 'SHIT' found?");

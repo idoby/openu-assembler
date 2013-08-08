@@ -11,7 +11,7 @@ OBJECTS = $(SOURCES:.c=.o)
 
 # If an executable target is defined, link all of the dependencies and output it
 ifneq ($(TARGET),)
-$(TARGET): $(SOURCE_DIRS) $(OBJECTS) $(EXTRA_DEPS)
+$(TARGET): clean $(SOURCE_DIRS) $(OBJECTS) $(EXTRA_DEPS)
 	$(CC) $(OBJECTS) -o $(TARGET)
 
 .DEFAULT_GOAL := $(TARGET)
