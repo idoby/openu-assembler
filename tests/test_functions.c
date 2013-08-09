@@ -8,6 +8,7 @@
 #include <modules/default/default_input.h>
 #include <modules/default/default_translate.h>
 #include <modules/default/default_output.h>
+#include <modules/default/default_instruction.h>
 
 static int __TEST_default_input(void)
 {
@@ -134,7 +135,7 @@ static int __TEST_default_translate(void)
 	return TEST_SUCCESS;
 }
 
-static void __print_inst(instruction *inst)
+static void __print_inst(default_instruction *inst)
 {
 	if (inst == NULL)
 		return;
@@ -148,7 +149,7 @@ static void __print_inst(instruction *inst)
 
 static int __TEST_default_instruction_make(void)
 {
-	instruction *inst1, *inst2;
+	default_instruction *inst1, *inst2;
 
 	/* Get an instruction that exists.*/
 	inst1 = default_instruction_make("clr");

@@ -3,22 +3,12 @@
 #include <ctype.h>
 
 #include "default_translate.h"
+#include "default_instruction.h"
 
 #include <data_structures/intrusive_list.h>
 #include <data_structures/scratch_space.h>
 #include <data_structures/symbol_table.h>
 #include <utils.h>
-
-enum addressing_mode {
-	IMMEDIATE 	= 1,
-	DIRECT		= 2,
-	INDEX		= 4,
-	REGISTER	= 8,
-	ALL = IMMEDIATE | DIRECT | INDEX | REGISTER,
-	NO_IMMEDIATE = DIRECT | INDEX | REGISTER,
-	NONE = 0,
-	ADDRESSING_MAX_MODE = REGISTER
-};
 
 typedef struct default_translate_context {
 	unsigned int 	line_number;
@@ -35,48 +25,6 @@ translate_ops default_translate_ops =
 					default_translate_line,
 					default_is_program_valid,
 					default_translate_finalize };
-
-#define INSTRUCTION_NAME_MAX_LEN 	4
-
-#define INSTRUCTION_LIST(list_entry)	\
-					/*name	opcode	#operands	1st allowed modes	2nd allowed modes. */	\
-	list_entry		(mov,	00,		2,			ALL,				NO_IMMEDIATE)			\
-	list_entry		(cmp,	01,		2,			ALL,				ALL			)			\
-	list_entry		(add,	02,		2,			ALL,				NO_IMMEDIATE)			\
-	list_entry		(sub,	03,		2,			ALL,				NO_IMMEDIATE)			\
-	list_entry		(not,	04,		1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(clr,	05,		1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(lea,	06,		2,			NO_IMMEDIATE,		NO_IMMEDIATE)			\
-	list_entry		(inc,	07,		1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(dec,	010,	1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(jmp,	011,	1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(bne,	012,	1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(red,	013,	1,			NO_IMMEDIATE,		NONE		)			\
-	list_entry		(prn,	014,	1,			ALL,				NONE		)			\
-	list_entry		(jsr,	015,	1,			IMMEDIATE,			NONE		)			\
-	list_entry		(rts,	016,	0,			NONE,				NONE		)			\
-	list_entry		(stop,	017,	0,			NONE,				NONE		)
-
-#define for_each_instruction(inst) for ((inst) = inst_prototypes; (inst)->name != NULL; ++inst)
-
-#define INS_MAKE_PROTOTYPE(name, opcode, ops, src_modes, dst_modes)	\
-	{#name, (opcode), (ops), {(src_modes), (dst_modes)}},
-
-static ins_prototype inst_prototypes[] = { INSTRUCTION_LIST(INS_MAKE_PROTOTYPE) /*,*/ {NULL, 0, 0, {0,0}} }; /* This line is not an error. */
-
-typedef struct address {
-	enum addressing_mode type;
-	union address_data {
-		int immediate_data;
-		symbol *direct_sym;
-		struct index_data
-		{
-			struct symbol *symbol;
-			struct address *index;
-		} index_data;
-		unsigned int register_number;
-	} data;
-} address;
 
 static const int  NUM_REGISTERS			= 8;
 static const int  REGISTER_NAME_WIDTH	= 2;
@@ -136,14 +84,14 @@ translate_context*	default_translate_init
 
 void default_translate_destroy(translate_context *tc)
 {
-	instruction *current, *safe;
+	default_instruction *current, *safe;
 	default_translate_context *dtc = tc;
 
 	if (dtc == NULL)
 		return;
 
 	/* Delete all instructions. */
-	list_for_each_entry_safe(&dtc->insts, current, safe, instruction, insts)
+	list_for_each_entry_safe(&dtc->insts, current, safe, default_instruction, insts)
 		default_instruction_destroy(current);
 
 	free(dtc);

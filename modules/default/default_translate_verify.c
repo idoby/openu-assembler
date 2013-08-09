@@ -12,7 +12,6 @@ static const char* __verify_register(const char *p)
 static const char* __verify_label_aux(const char *p, int optional)
 {
 	const char *p2 = p;
-	ins_prototype *inst;
 
 	/* Does the line begin with the label indicator? That's bad! */
 	if (*p2 == LABEL_INDICATOR)
@@ -27,9 +26,8 @@ static const char* __verify_label_aux(const char *p, int optional)
 		return NULL;
 
 	/* If the label is an instruction name, it's invalid, but we might not care about it. */
-	for_each_instruction(inst)
-		if (strncmp(p, inst->name, strlen(inst->name)) == 0)
-			return optional ? p : NULL;
+	if (default_instruction_get_prototype(p) != NULL)
+		return optional ? p : NULL;
 
 	/* Find the end of the label. */
 	while (isalnum(*p2) || *p2 == '_' || *p2 == '-')
@@ -146,7 +144,7 @@ static const char* __verify_directive(const char *p)
 	return NULL; /* This is not a valid directive line. */
 }
 
-static const char* __verify_modifiers(const char *p, ins_prototype *proto)
+static const char* __verify_modifiers(const char *p, default_ins_prototype *proto)
 {
 	p = __skip_whitespace(p);
 
@@ -239,7 +237,7 @@ static const char* __verify_operand(const char* p, unsigned int allowed)
 	return NULL;
 }
 
-static const char* __verify_operands(const char *p, ins_prototype *proto)
+static const char* __verify_operands(const char *p, default_ins_prototype *proto)
 {
 	unsigned int operand = 0;
 
@@ -269,29 +267,26 @@ static const char* __verify_operands(const char *p, ins_prototype *proto)
 
 static const char* __verify_instruction(const char *p)
 {
-	ins_prototype *inst = inst_prototypes;
+	default_ins_prototype *inst = default_instruction_get_prototype(p);
 
-	for_each_instruction(inst)
-		if (strncmp(p, inst->name, strlen(inst->name)) == 0)
-		{
-			/* Skip the instruction name. */
-			p += strlen(inst->name);
-
-			/* Verify the modifiers after the instruction name. */
-			p = __verify_modifiers(p, inst);
-			
-			if (p == NULL)
-				return NULL;
-
-			/*	The hardest part of the verification.
-				The last bastion of unverified syntax lies beyond p.
-				Let us go boldly now where no pointer has gone before.
-				Some of us may not return, but it must be done. */
-			return __verify_operands(p, inst);
-		}
-	
 	/* This is not an instruction we know, therefore it is invalid. */
-	return NULL;
+	if (inst == NULL)
+		return NULL;
+
+	/* Skip the instruction name. */
+	p += strlen(inst->name);
+
+	/* Verify the modifiers after the instruction name. */
+	p = __verify_modifiers(p, inst);
+	
+	if (p == NULL)
+		return NULL;
+
+	/*	The hardest part of the verification.
+		The last bastion of unverified syntax lies beyond p.
+		Let us go boldly now where no pointer has gone before.
+		Some of us may not return, but it must be done. */
+	return __verify_operands(p, inst);
 }
 
 static translate_line_error __verify_line(default_translate_context *dtc, const char *p)
