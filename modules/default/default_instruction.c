@@ -54,6 +54,7 @@ default_instruction* default_instruction_make(const char *name)
 	inst->proto = proto;
 	inst->type 	= 0;
 	inst->dbl	= 0;
+	inst->comb	= 0;
 
 	list_init(&inst->insts);
 

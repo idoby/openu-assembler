@@ -5,7 +5,7 @@ typedef enum parse_label_error {
 	LABEL_NO_LABEL
 } parse_label_error;
 
-static parse_label_error __parse_assign_label(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int defined)
+static parse_label_error __parse_assign_label(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int define)
 {
 	symbol *old_sym = NULL;
 	symbol *new_sym = NULL;
@@ -33,10 +33,10 @@ static parse_label_error __parse_assign_label(scratch_space *s, symbol_table *sy
 	if (s != NULL)
 		table_set_address_space(new_sym, s, scratch_get_next_offset(s));
 
-	if (!table_is_entry(new_sym))
+	if (define && !table_is_entry(new_sym))
 		table_set_type(new_sym, type);
 
-	if (defined)
+	if (define)
 		table_set_defined(new_sym);
 
 	return LABEL_SET;
@@ -202,8 +202,44 @@ static const char* __parse_directive(default_translate_context *dtc, const char 
 
 static const char* __parse_modifiers(const char *p, default_instruction *inst)
 {
-	/* TODO: implement */
-	return p;
+	/* Skip the /. */
+	p = __skip_whitespace(p + 1);
+
+	if (*p == INST_MOD_TYPE_TRUE)	/* type=1, so we need to find a /# sequence for each operand */
+	{
+		unsigned int operand = 0;
+
+		inst->type = 1;
+		++p;
+
+		for (; operand < inst->proto->num_operands; ++operand)		
+		{
+			/* Skip the /. */
+			p = __skip_whitespace(p + 1);
+
+			if (*p == INST_MOD_LEFT_BITS)
+				inst->comb |= 0;
+			else if(*p == INST_MOD_RIGHT_BITS)
+				inst->comb |= 1;
+
+			++p;
+
+			if (operand != inst->proto->num_operands - 1)
+				inst-> comb <<= 1;
+		}
+	}
+	else if (*p++ == INST_MOD_TYPE_FALSE) /* Must be type=0. */
+		inst->type = 0;
+
+	/* After the type specifier we have to find a , and a dbl symbol. */
+	p = __skip_whitespace(__skip_whitespace(p) + 1);
+
+	if (*p == INST_MOD_DBL_TRUE)
+		inst->dbl = 1;
+	else if (*p == INST_MOD_DBL_FALSE)
+		inst->dbl = 0;
+
+	return ++p;
 }
 
 static const char* __parse_operands(const char *p, default_instruction *inst)
@@ -223,12 +259,30 @@ static const char* __parse_instruction(default_translate_context *dtc, const cha
 	if (inst == NULL)
 		return NULL;
 
+	/* Prepare space in the address space for the instruction. */
+	inst->address_space = dtc->i_scratch;
+	inst->address_offset = scratch_get_next_offset(dtc->i_scratch);
+
+	/* Define a label for this line if it exists. */
+	if (!__parse_define_label(dtc->i_scratch, dtc->syms, label))
+		goto parse_exit;
+
+	/* Write zeroes for now just to reserve space. */
+	scratch_write_next_data(dtc->i_scratch, 0, ABSOLUTE);
+
 	p = __skip_whitespace(p + strlen(inst->proto->name));
 
 	p = __parse_modifiers(p, inst);
 	p = __parse_operands(p, inst);
 
+	/* Add new instruction to the end of the instruction list in the context. */
+	list_insert_before(&dtc->insts, &inst->insts);
+
 	return p;
+
+parse_exit:
+	default_instruction_destroy(inst);
+	return NULL;
 }
 
 /*	Breaks down the line into a more abstract representation, assuming that the syntax
