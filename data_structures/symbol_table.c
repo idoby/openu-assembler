@@ -4,7 +4,7 @@
 
 #define table_insert(table, new) tree_insert(table, new, __table_compare_symbols)
 
-struct orphaned_reference {
+struct reference {
 	void *inst;
 	list refs;
 };
@@ -12,14 +12,14 @@ struct orphaned_reference {
 /* Delete a single element from the tree. */
 static void __delete_element(table_element *element)
 {
-	struct orphaned_reference *ref, *safe;
+	struct reference *ref, *safe;
 	symbol *sym = table_entry(element);
 
-	/* Delete orphaned references, if any exist. */
-	list_for_each_entry_safe(	&sym->orphaned_references,
+	/* Delete references, if any exist. */
+	list_for_each_entry_safe(	&sym->references,
 								ref,
 								safe,
-								struct orphaned_reference,
+								struct reference,
 								refs)
 	{
 		list_remove(&ref->refs);
@@ -68,7 +68,7 @@ symbol* table_new_symbol(symbol_table* table, const char* name)
 	sym->address_offset	= 0;
 	strncpy(sym->name, name, SYMBOL_MAX_LENGTH + 1);
 	sym->name[SYMBOL_MAX_LENGTH] = '\0';
-	list_init(&sym->orphaned_references);
+	list_init(&sym->references);
 	tree_node_init(&sym->sym_tree);
 
 	/* Insert into table. */
@@ -107,7 +107,7 @@ void table_traverse(symbol_table *table, table_visit_func visit)
 
 int table_add_reference(symbol *sym, void *inst)
 {
-	struct orphaned_reference *ref;
+	struct reference *ref;
 
 	if (sym == NULL || inst == NULL)
 		return 0;
@@ -118,19 +118,19 @@ int table_add_reference(symbol *sym, void *inst)
 	ref->inst = inst;
 
 	/* Insert new reference object at the end of the list. */
-	list_insert_before(&sym->orphaned_references, &ref->refs);
+	list_insert_before(&sym->references, &ref->refs);
 
 	return 1;
 }
 
 void table_consume_references(symbol *sym, table_consume_func consume)
 {
-	struct orphaned_reference *ref, *safe;
+	struct reference *ref, *safe;
 
 	if (sym == NULL || consume == NULL)
 		return;
 
-	list_for_each_entry_safe(&sym->orphaned_references, ref, safe, struct orphaned_reference, refs)
+	list_for_each_entry_safe(&sym->references, ref, safe, struct reference, refs)
 	{
 		consume(ref->inst);
 

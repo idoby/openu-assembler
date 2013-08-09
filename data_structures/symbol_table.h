@@ -23,7 +23,7 @@ typedef struct symbol {
 	struct scratch_space	*address_space;			/* Pointer to where this symbol refers to. */
 													/* Just a pointer, no need to include the actual declaration. */
 	unsigned int			address_offset;			/* Offset within the address space. */
-	list					orphaned_references;	/* List of references to the symbol when it's not defined yet. */
+	list					references;	/* List of references to the symbol. */
 	table_element			sym_tree;				/* Binary search subtree for symbol table. */
 } symbol;
 
