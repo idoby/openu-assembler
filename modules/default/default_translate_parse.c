@@ -5,7 +5,7 @@ typedef enum parse_label_error {
 	LABEL_NO_LABEL
 } parse_label_error;
 
-static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int defined)
+static parse_label_error __parse_assign_label(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int defined)
 {
 	symbol *old_sym = NULL;
 	symbol *new_sym = NULL;
@@ -42,9 +42,9 @@ static parse_label_error __parse_label_assign(scratch_space *s, symbol_table *sy
 	return LABEL_SET;
 }
 
-static int __parse_label_define_internal(scratch_space *s, symbol_table *syms, const char *label)
+static int __parse_define_label(scratch_space *s, symbol_table *syms, const char *label)
 {
-	switch (__parse_label_assign(s, syms, label, INTERN, 1))
+	switch (__parse_assign_label(s, syms, label, INTERN, 1))
 	{
 		case LABEL_EXISTS:
 			return 0; /* TODO: label is a duplicate, error message. */
@@ -137,7 +137,7 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 		/* 	Define the label, or quit if unsuccessful.
 		 	The label should be defined only if it's external.
 		 	Entry labels still require a definition in the file. */
-		switch (__parse_label_assign(NULL, dtc->syms, label, type, type == EXTERN))
+		switch (__parse_assign_label(NULL, dtc->syms, label, type, type == EXTERN))
 		{
 			case LABEL_ALLOC_ERROR:
 				return NULL; /* TODO: error message. */
@@ -161,6 +161,8 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 	}
 }
 
+/*	The following functions are the meat of this project.
+	It is not surprising, therefore, that they were written as late as possible. */
 static const char* __parse_directive(default_translate_context *dtc, const char *p, const char *label)
 {
 	if (is_directive(p, DIRECTIVE_DATA))
@@ -169,7 +171,7 @@ static const char* __parse_directive(default_translate_context *dtc, const char 
 		p = __skip_whitespace(p + strlen(DIRECTIVE_DATA));
 
 		/* If a label exists, it should point to the start of the data. */
-		if (!__parse_label_define_internal(dtc->d_scratch, dtc->syms, label))
+		if (!__parse_define_label(dtc->d_scratch, dtc->syms, label))
 			return NULL;
 
 		/* Parse the list and write it to the data space. */
@@ -179,7 +181,7 @@ static const char* __parse_directive(default_translate_context *dtc, const char 
 	{
 		p = __skip_whitespace(p + strlen(DIRECTIVE_STRING));
 
-		if (!__parse_label_define_internal(dtc->d_scratch, dtc->syms, label))
+		if (!__parse_define_label(dtc->d_scratch, dtc->syms, label))
 			return NULL;
 
 		return __parse_string_list(dtc->d_scratch, p);
@@ -240,4 +242,108 @@ static translate_line_error __parse_line(default_translate_context *dtc, const c
 	return TRANSLATE_LINE_SUCCESS;
 
 #undef LABEL_IF_EXISTS
+}
+
+static ins_prototype* __get_prototype(char* name)
+{
+	ins_prototype *inst;
+
+	/* Look up the symbol by name. */
+	for_each_instruction(inst)
+		if (strncmp(name, inst->name, strlen(inst->name)) == 0)
+			return inst;
+
+	return NULL;
+}
+
+instruction* default_instruction_make(char *name)
+{
+	instruction *inst;
+	unsigned int i = 0;
+
+	struct ins_prototype *proto = __get_prototype(name);
+
+	if (proto == NULL)
+		return NULL;
+
+	if ((inst = malloc(sizeof(*inst))) == NULL)
+		return NULL;
+
+	inst->proto = proto;
+	inst->type 	= 0;
+	inst->dbl	= 0;
+
+	for (; i < MAX_OPERANDS; ++i)
+		inst->operands[i] = NULL;
+
+	list_init(&inst->insts);
+
+	return inst;
+}
+
+static address* __address_make(enum addressing_mode mode)
+{
+	address *ad;
+
+	if (mode == NONE)
+		return NULL;
+
+	/* Hack to test if mode is only one of the valid members of the enum. */
+	if (!(mode & (mode - 1)) || mode > ADDRESSING_MAX_MODE)
+		return NULL;
+
+	/* Allocate some precious memory. */
+	if ((ad = malloc(sizeof(*ad))) == NULL)
+		return NULL;
+
+	/* Initialize the addressing type. */
+	ad->type = mode;
+
+	/* Initialize the appropriate fields based on the specified mode. */
+	switch (mode)
+	{
+		case IMMEDIATE:
+			ad->data.immediate_data		= 0;
+			break;
+		case DIRECT:
+			ad->data.direct_sym			= NULL;
+			break;
+		case INDEX:
+			ad->data.index_data.symbol	= NULL;
+			ad->data.index_data.index	= NULL;
+			break;
+		case REGISTER:
+			ad->data.register_number	= 0;
+			break;
+		default:
+			free(ad);	/*	Should never happen, but  */
+			ad = NULL;	/*	of course, it's bound to. */
+	}
+
+	return ad;
+}
+
+static void __address_destroy(address *ad)
+{
+	if (ad == NULL)
+		return;
+
+	if (ad->type == INDEX && ad->data.index_data.index != NULL)
+		__address_destroy(ad->data.index_data.index);
+
+	free(ad);
+}
+
+void default_instruction_destroy(instruction *inst)
+{
+	unsigned int i = 0;
+	if (inst == NULL)
+		return;
+
+	list_remove(&inst->insts);
+
+	for (; i < MAX_OPERANDS; ++i)
+		__address_destroy(inst->operands[i]);
+
+	free(inst);
 }

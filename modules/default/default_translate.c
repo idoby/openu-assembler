@@ -179,8 +179,6 @@ static const char* __skip_whitespace(const char *p)
 #include "default_translate_verify.c"
 #include "default_translate_parse.c"
 
-/*	The following two functions are the meat of this project.
-	It is not surprising, therefore, that they were written as late as possible. */
 translate_line_error default_translate_line(translate_context *tc, const char *line)
 {
 	default_translate_context *dtc = tc;
@@ -226,108 +224,4 @@ translate_error default_translate_finalize(translate_context *tc)
 	/* TODO: implement this function. */
 
 	return TRANSLATE_SUCCESS;
-}
-
-static ins_prototype* __get_prototype(char* name)
-{
-	ins_prototype *inst;
-
-	/* Look up the symbol by name. */
-	for_each_instruction(inst)
-		if (strncmp(name, inst->name, strlen(inst->name)) == 0)
-			return inst;
-
-	return NULL;
-}
-
-instruction* default_instruction_make(char *name)
-{
-	instruction *inst;
-	unsigned int i = 0;
-
-	struct ins_prototype *proto = __get_prototype(name);
-
-	if (proto == NULL)
-		return NULL;
-
-	if ((inst = malloc(sizeof(*inst))) == NULL)
-		return NULL;
-
-	inst->proto = proto;
-	inst->type 	= 0;
-	inst->dbl	= 0;
-
-	for (; i < MAX_OPERANDS; ++i)
-		inst->operands[i] = NULL;
-
-	list_init(&inst->insts);
-
-	return inst;
-}
-
-static address* __address_make(enum addressing_mode mode)
-{
-	address *ad;
-
-	if (mode == NONE)
-		return NULL;
-
-	/* Hack to test if mode is only one of the valid members of the enum. */
-	if (!(mode & (mode - 1)) || mode > ADDRESSING_MAX_MODE)
-		return NULL;
-
-	/* Allocate some precious memory. */
-	if ((ad = malloc(sizeof(*ad))) == NULL)
-		return NULL;
-
-	/* Initialize the addressing type. */
-	ad->type = mode;
-
-	/* Initialize the appropriate fields based on the specified mode. */
-	switch (mode)
-	{
-		case IMMEDIATE:
-			ad->data.immediate_data		= 0;
-			break;
-		case DIRECT:
-			ad->data.direct_sym			= NULL;
-			break;
-		case INDEX:
-			ad->data.index_data.symbol	= NULL;
-			ad->data.index_data.index	= NULL;
-			break;
-		case REGISTER:
-			ad->data.register_number	= 0;
-			break;
-		default:
-			free(ad);	/*	Should never happen, but  */
-			ad = NULL;	/*	of course, it's bound to. */
-	}
-
-	return ad;
-}
-
-static void __address_destroy(address *ad)
-{
-	if (ad == NULL)
-		return;
-
-	if (ad->type == INDEX && ad->data.index_data.index != NULL)
-		__address_destroy(ad->data.index_data.index);
-
-	free(ad);
-}
-
-void default_instruction_destroy(instruction *inst)
-{
-	unsigned int i = 0;
-	if (inst == NULL)
-		return;
-
-	list_remove(&inst->insts);
-
-	for (; i < MAX_OPERANDS; ++i)
-		__address_destroy(inst->operands[i]);
-
-	free(inst);
 }
