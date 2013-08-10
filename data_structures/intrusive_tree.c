@@ -66,13 +66,13 @@ tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
 	/* If the current node is bigger than the one we're looking for, go left. */
 	else if (rel == 1) {
 		if (node->left != NULL)
-			__tree_search(node->left, find, cmp);
+			return __tree_search(node->left, find, cmp);
 		else
 			return NULL;
 	}
 	else if (rel == -1) {
 		if (node->right != NULL)
-			__tree_search(node->right, find, cmp);
+			return __tree_search(node->right, find, cmp);
 		else
 			return NULL;
 	}
