@@ -63,58 +63,6 @@ default_instruction* default_instruction_make(const char *name)
 
 #define is_valid_mode(mode) (!(mode & (mode - 1)) || mode > ADDRESSING_MAX_MODE)
 
-void default_address_init(address *ad, enum addressing_mode mode, enum addressing_mode index_mode)
-{
-	if (ad == NULL || mode == NONE)
-		return;
-
-	/* Hack to test if mode is only one of the valid members of the enum. */
-	if (!is_valid_mode(mode))
-		return;
-
-	if (mode == INDEX && !is_valid_mode(index_mode))
-		return;
-
-	/* Initialize the addressing type. */
-	ad->type = mode;
-
-	/* Initialize the appropriate fields based on the specified mode. */
-	switch (mode)
-	{
-		case IMMEDIATE:
-			ad->data.immediate_data		= 0;
-			break;
-		case DIRECT:
-			ad->data.sym				= NULL;
-			break;
-		case INDEX:
-			ad->data.sym				= NULL;
-			ad->index_type				= index_mode;
-			switch (index_mode)
-			{
-				case IMMEDIATE:
-					ad->index_data.immediate_data 	= 0;
-					break;
-				case DIRECT:
-					ad->index_data.sym				= NULL;
-					break;
-				case REGISTER:
-					ad->index_data.register_number	= 0;
-					break;
-				case INDEX:
-				default:
-					ad->index_data.none 			= 0;
-					break;
-			}
-			break;
-		case REGISTER:
-			ad->data.register_number	= 0;
-			break;
-		default:
-			ad->data.none				= 0;
-	}
-}
-
 void default_address_set_immediate(address *ad, int immediate)
 {
 	if (ad == NULL)

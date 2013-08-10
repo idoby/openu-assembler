@@ -66,8 +66,6 @@ void					default_instruction_destroy(default_instruction *inst);
 /* Gets an instruction prototype from name. */
 default_ins_prototype*	default_instruction_get_prototype(const char* name);
 
-void default_address_init(address *ad, enum addressing_mode mode, enum addressing_mode index_mode);
-
 void default_address_set_immediate(address *ad, int immediate);
 int default_address_get_immediate(address *ad);
 
