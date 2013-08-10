@@ -173,3 +173,8 @@ int table_is_entry(symbol *sym)
 {
 	return sym == NULL ? 0 : (sym->type == ENTRY);
 }
+
+int table_is_extern(symbol *sym)
+{
+	return sym == NULL ? 0 : (sym->type == EXTERN);
+}

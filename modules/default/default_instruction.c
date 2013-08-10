@@ -85,26 +85,25 @@ void default_address_init(address *ad, enum addressing_mode mode, enum addressin
 			ad->data.immediate_data		= 0;
 			break;
 		case DIRECT:
-			ad->data.direct_sym			= NULL;
+			ad->data.sym				= NULL;
 			break;
 		case INDEX:
-			ad->data.none				= 0;
-			ad->index_data.symbol 		= NULL;
-			ad->index_data.type = index_mode;
+			ad->data.sym				= NULL;
+			ad->index_type				= index_mode;
 			switch (index_mode)
 			{
 				case IMMEDIATE:
-					ad->index_data.index.immediate_data 	= 0;
+					ad->index_data.immediate_data 	= 0;
 					break;
 				case DIRECT:
-					ad->index_data.index.direct_sym 		= NULL;
+					ad->index_data.sym				= NULL;
 					break;
 				case REGISTER:
-					ad->index_data.index.register_number	= 0;
+					ad->index_data.register_number	= 0;
 					break;
 				case INDEX:
 				default:
-					ad->index_data.index.none 			= 0;
+					ad->index_data.none 			= 0;
 					break;
 			}
 			break;
@@ -114,6 +113,90 @@ void default_address_init(address *ad, enum addressing_mode mode, enum addressin
 		default:
 			ad->data.none				= 0;
 	}
+}
+
+void default_address_set_immediate(address *ad, int immediate)
+{
+	if (ad == NULL)
+		return;
+
+	ad->type				= IMMEDIATE;
+	ad->data.immediate_data = immediate;
+}
+
+int default_address_get_immediate(address *ad)
+{
+	if (ad == NULL)
+		return 0;
+
+	return ad->data.immediate_data;
+}
+
+void default_address_set_register(address *ad, int reg_num)
+{
+	if (ad == NULL)
+		return;
+
+	ad->type					= REGISTER;
+	ad->data.register_number 	= reg_num;
+}
+
+int default_address_get_register(address *ad)
+{
+	if (ad == NULL)
+		return INVALID_REGISTER;
+
+	return ad->data.register_number;
+}
+
+void default_address_set_symbol(address *ad, symbol *sym)
+{
+	if (ad == NULL || sym == NULL)
+		return;
+
+	ad->type 		= DIRECT;
+	ad->data.sym	= sym;
+}
+
+symbol* default_address_get_symbol(address *ad)
+{
+	if (ad == NULL)
+		return NULL;
+
+	return ad->data.sym;
+}
+
+void default_address_set_index_number(address *ad, int num)
+{
+	if (ad == NULL)
+		return;
+
+	ad->type						= INDEX;
+
+	ad->index_type					= IMMEDIATE;
+	ad->index_data.immediate_data	= num;
+}
+
+void default_address_set_index_register(address *ad, int reg_num)
+{
+	if (ad == NULL)
+		return;
+
+	ad->type						= INDEX;
+
+	ad->index_type					= REGISTER;
+	ad->index_data.register_number	= reg_num;
+}
+
+void default_address_set_index_symbol(address *ad, symbol *sym)
+{
+	if (ad == NULL)
+		return;
+
+	ad->type			= INDEX;
+
+	ad->index_type		= DIRECT;
+	ad->index_data.sym	= sym;
 }
 
 void default_instruction_destroy(default_instruction *inst)

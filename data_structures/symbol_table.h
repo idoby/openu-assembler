@@ -23,7 +23,7 @@ typedef struct symbol {
 	struct scratch_space	*address_space;			/* Pointer to where this symbol refers to. */
 													/* Just a pointer, no need to include the actual declaration. */
 	unsigned int			address_offset;			/* Offset within the address space. */
-	list					references;	/* List of references to the symbol. */
+	list					references;				/* List of references to the symbol. */
 	table_element			sym_tree;				/* Binary search subtree for symbol table. */
 } symbol;
 
@@ -59,6 +59,9 @@ int		table_is_defined(symbol *sym);
 
 		/* Returns 1 if symbol is an entry. */
 int		table_is_entry(symbol *sym);
+
+		/* Returns 1 if symbol is an extern. */
+int		table_is_extern(symbol *sym);
 
 		/*	Table destructor. Frees up all the memory. Remember to call! */
 void 	table_destroy(symbol_table *table);
