@@ -90,24 +90,25 @@ tree_node* tree_search(tree *root, tree_node *find, compare_func cmp)
 }
 
 /* Post-order traversal to allow this routine to be used for deletion of the tree. */
-static void __tree_traverse(tree_node *node, visit_func visit, void *arg)
+static int __tree_traverse(tree_node *node, visit_func visit, void *arg)
 {
+	int status = 1;
 	/* If left child exists, recurse. */
 	if (node->left != NULL)
-		__tree_traverse(node->left, visit, arg);
+		status = __tree_traverse(node->left, visit, arg);
 
 	/* Now the right. */
 	if (node->right != NULL)
-		__tree_traverse(node->right, visit, arg);
+		status = __tree_traverse(node->right, visit, arg) && status;
 
 	/* Visit the node itself first. */
-	visit(node, arg);
+	return visit(node, arg) && status;
 }
 
-void tree_traverse(tree *root, visit_func visit, void *arg)
+int tree_traverse(tree *root, visit_func visit, void *arg)
 {
 	if (root == NULL || root->root_node == NULL || visit == NULL)
-		return;
+		return 0;
 
-	__tree_traverse(root->root_node, visit, arg);
+	return __tree_traverse(root->root_node, visit, arg);
 }

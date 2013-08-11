@@ -173,12 +173,14 @@ static int __TEST_default_instruction_make(void)
 	return TEST_SUCCESS;
 }
 
-static void __print_symbols(table_element *element, void *arg)
+static int __print_symbols(table_element *element, void *arg)
 {
 	symbol *sym = table_entry(element);
 
 	if (sym->name != NULL)
 		printf("SYMBOL: %s TYPE: %d\n", sym->name, sym->type);
+
+	return 1;
 
 	UNUSED_PARAM(arg); /* Shut up compiler. */
 }

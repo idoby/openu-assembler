@@ -11,7 +11,7 @@ struct reference {
 };
 
 /* Delete a single element from the tree. */
-static void __delete_element(table_element *element, void *arg)
+static int __delete_element(table_element *element, void *arg)
 {
 	struct reference *ref, *safe;
 	symbol *sym = table_entry(element);
@@ -29,6 +29,8 @@ static void __delete_element(table_element *element, void *arg)
 
 	/* Deallocate symbol itself. */
 	free(sym);
+
+	return 1;
 
 	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
@@ -103,9 +105,9 @@ void table_destroy(symbol_table* table)
 	table->root_node = NULL;
 }
 
-void table_traverse(symbol_table *table, table_visit_func visit, void *arg)
+int table_traverse(symbol_table *table, table_visit_func visit, void *arg)
 {
-	tree_traverse(table, visit, arg);
+	return tree_traverse(table, visit, arg);
 }
 
 int table_add_reference(symbol *sym, void *data)

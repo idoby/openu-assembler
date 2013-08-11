@@ -31,7 +31,7 @@ typedef struct symbol {
 #define table_entry(entry) container_of(symbol, entry, sym_tree)
 
 		/*	Prototype for function handling each symbol in the table in traversal. */
-typedef void (*table_visit_func)(table_element *symbol, void *arg);
+typedef int	(*table_visit_func)(table_element *symbol, void *arg);
 		/*	Prototype for function handling each instruction in a reference list in traversal. */
 typedef void (*table_consume_func)(void *data, void *arg);
 
@@ -67,7 +67,7 @@ int		table_is_extern(symbol *sym);
 void 	table_destroy(symbol_table *table);
 
 		/*	Iterates over all symbols in the table. */
-void	table_traverse(symbol_table *table, table_visit_func visit, void *arg);
+int		table_traverse(symbol_table *table, table_visit_func visit, void *arg);
 
 		/*	Add a new orphaned reference to a symbol.
 			Returns 1 on success or 0 on error. This is because I don't
