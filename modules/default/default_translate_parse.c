@@ -52,15 +52,20 @@ static symbol* __parse_get_symbol(symbol_table *syms, const char *label)
 	return table_new_symbol(syms, label);
 }
 
-static int __parse_define_label(scratch_space *s, symbol_table *syms, const char *label)
+static int __parse_define_label(scratch_space *s, default_translate_context *dtc, const char *label)
 {
-	switch (__parse_assign_symbol(s, syms, label, INTERN, 1))
+	error *err = NULL;
+	switch (__parse_assign_symbol(s, dtc->syms, label, INTERN, 1))
 	{
 		case LABEL_EXISTS:
-			return 0; /* TODO: label is a duplicate, error message. */
+			err = error_make(dtc->line_number, "Label %s is being defined twice", label);
+			list_insert_before(dtc->errors, &err->errors);
+			return 0;
 			break;
 		case LABEL_ALLOC_ERROR:
-			return 0; /* TODO: allocation error, message. */
+			err = error_make(dtc->line_number, "Unable to allocate space for label %s, quitting", label);
+			list_insert_before(dtc->errors, &err->errors);
+			return 0;
 			break;
 		case LABEL_NO_LABEL:
 		case LABEL_SET:
@@ -157,6 +162,7 @@ static const char* __parse_string_list(scratch_space *s, const char *p)
 
 static const char* __parse_label_list(default_translate_context *dtc, const char *p, symbol_type type)
 {
+	error *err = NULL;
 	while (1)
 	{
 		char label[SYMBOL_MAX_LENGTH + 1] = {0};
@@ -172,10 +178,14 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 		switch (__parse_assign_symbol(NULL, dtc->syms, label, type, type == EXTERN))
 		{
 			case LABEL_ALLOC_ERROR:
-				return NULL; /* TODO: error message. */
+				err = error_make(dtc->line_number, "Unable to allocate space for label %s, quitting", label);
+				list_insert_before(dtc->errors, &err->errors);
+				return NULL;
 				break;
 			case LABEL_EXISTS:
-				return NULL; /* TODO: error message. */
+				err = error_make(dtc->line_number, "Label %s is being defined twice", label);
+				list_insert_before(dtc->errors, &err->errors);
+				return NULL;
 				break;
 			case LABEL_NO_LABEL:
 			case LABEL_SET:
@@ -203,7 +213,7 @@ static const char* __parse_directive(default_translate_context *dtc, const char 
 		p = __skip_whitespace(p + strlen(DIRECTIVE_DATA));
 
 		/* If a label exists, it should point to the start of the data. */
-		if (!__parse_define_label(dtc->d_scratch, dtc->syms, label))
+		if (!__parse_define_label(dtc->d_scratch, dtc, label))
 			return NULL;
 
 		/* Parse the list and write it to the data space. */
@@ -213,7 +223,7 @@ static const char* __parse_directive(default_translate_context *dtc, const char 
 	{
 		p = __skip_whitespace(p + strlen(DIRECTIVE_STRING));
 
-		if (!__parse_define_label(dtc->d_scratch, dtc->syms, label))
+		if (!__parse_define_label(dtc->d_scratch, dtc, label))
 			return NULL;
 
 		return __parse_string_list(dtc->d_scratch, p);
@@ -276,6 +286,7 @@ static const char* __parse_modifiers(const char *p, default_instruction *inst)
 
 static const char* __parse_operand(default_translate_context *dtc, const char *p, default_instruction *inst, address *ad)
 {
+	error *err = NULL;
 	int reg_num = INVALID_REGISTER;
 
 	if (*p == IMMEDIATE_INDICATOR)
@@ -314,7 +325,11 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 		first_sym = __parse_get_symbol(dtc->syms, first_label);
 
 		if (first_sym == NULL)
-			return NULL; /* TODO: error message. */
+		{
+			err = error_make(dtc->line_number, "Unable to allocate space for label %s, quitting", first_label);
+			list_insert_before(dtc->errors, &err->errors);
+			return NULL;
+		}
 
 		default_address_set_symbol(ad, first_sym);
 
@@ -365,7 +380,11 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 				sec_sym = __parse_get_symbol(dtc->syms, sec_label);
 
 				if (sec_sym == NULL)
-					return NULL; /* TODO: error message. */
+				{
+					err = error_make(dtc->line_number, "Unable to allocate space for label %s, quitting", sec_label);
+					list_insert_before(dtc->errors, &err->errors);
+					return NULL;
+				}
 
 				default_address_set_index_symbol(ad, sec_sym);
 
@@ -412,14 +431,18 @@ static const char* __parse_instruction(default_translate_context *dtc, const cha
 	inst = default_instruction_make(p);
 
 	if (inst == NULL)
+	{
+		error *err = error_make(dtc->line_number, "Unable to allocate space for instruction, quitting");
+		list_insert_before(dtc->errors, &err->errors);
 		return NULL;
+	}
 
 	/* Prepare space in the address space for the instruction. */
 	inst->address_space = dtc->i_scratch;
 	inst->address_offset = scratch_get_next_offset(dtc->i_scratch);
 
 	/* Define a label for this line if it exists. */
-	if (!__parse_define_label(dtc->i_scratch, dtc->syms, label))
+	if (!__parse_define_label(dtc->i_scratch, dtc, label))
 		goto parse_exit;
 
 	/* Write zeroes for now just to reserve space. */
@@ -474,7 +497,7 @@ static translate_line_error __parse_line(default_translate_context *dtc, const c
 	}
 	/* Otherwise the line must be an instruction. */
 	else if (__parse_instruction(dtc, p, LABEL_IF_EXISTS) == NULL)
-		return TRANSLATE_LINE_ALLOC_ERROR; /* TODO: error message. */
+		return TRANSLATE_LINE_ALLOC_ERROR;
 
 	return TRANSLATE_LINE_SUCCESS;
 

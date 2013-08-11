@@ -289,6 +289,12 @@ static const char* __verify_instruction(const char *p)
 	return __verify_operands(p, inst);
 }
 
+#define __verify_return_error() \
+	do {	\
+		list_insert_before(dtc->errors, &err->errors);	\
+		return TRANSLATE_LINE_SYNTAX_ERROR;	\
+		} while(0)
+
 static translate_line_error __verify_line(default_translate_context *dtc, const char *p)
 {
 	const char *q;
@@ -297,7 +303,10 @@ static translate_line_error __verify_line(default_translate_context *dtc, const 
 
 	/* A digit at the start of the line is never valid in this language. */
 	if (isdigit(*p))
-		return TRANSLATE_LINE_SYNTAX_ERROR; /* TODO: error message. */
+	{
+		error *err = error_make(dtc->line_number, "A line may not begin with a digit");
+		__verify_return_error();
+	}
 
 	/* An empty or comment line is meaningless, but it is valid. */
 	if (__islineterm(*p))
@@ -308,7 +317,10 @@ static translate_line_error __verify_line(default_translate_context *dtc, const 
 
 	/* Bad label. */
 	if (q == NULL)
-		return TRANSLATE_LINE_SYNTAX_ERROR; /* TODO: error message. */
+	{
+		error *err = error_make(dtc->line_number, "Invalid label at beginning of line");
+		__verify_return_error();
+	}
 
 	/* If there is a label, skip it. */
 	if (q != p)
@@ -318,7 +330,11 @@ static translate_line_error __verify_line(default_translate_context *dtc, const 
 
 		/* At this point in the parse, the label must be followed by a ':'. */
 		if (*p != LABEL_INDICATOR)
-			return TRANSLATE_LINE_SYNTAX_ERROR; /* TODO: error message. */
+		{
+			error *err = error_make(dtc->line_number,
+									"Expected '%c' at the end of the label, got '%c'", LABEL_INDICATOR, *p);
+			__verify_return_error();
+		}
 
 		/* Skip the ':'. */
 		++p;
@@ -333,10 +349,24 @@ static translate_line_error __verify_line(default_translate_context *dtc, const 
 
 		/*	This function verifies rest of the line as a directive. */
 		if ((p = __verify_directive(p)) == NULL)
-			return TRANSLATE_LINE_SYNTAX_ERROR; /* TODO: error message. */
+		{
+			/* TODO: Maybe make error more detailed. */
+			error *err = error_make(dtc->line_number, "Syntax error on directive line");
+			__verify_return_error();
+		}
 	}
 	else if ((p = __verify_instruction(p)) == NULL)
-		return TRANSLATE_LINE_SYNTAX_ERROR; /* TODO: error message. */
+	{
+		/* TODO: Maybe make error more detailed. */
+		error *err = error_make(dtc->line_number, "Syntax error on instruction line");
+		__verify_return_error();
+	}
 
-	return __islineterm(*p) ? TRANSLATE_LINE_SUCCESS : TRANSLATE_LINE_SYNTAX_ERROR; /* TODO: error message. */
+	if (__islineterm(*p)) 
+		return TRANSLATE_LINE_SUCCESS;
+	else
+	{
+		error *err = error_make(dtc->line_number, "Unexpected characters at end of line");
+		__verify_return_error();
+	}
 }
