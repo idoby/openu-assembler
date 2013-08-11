@@ -13,7 +13,7 @@ typedef struct error
 	list errors;				/* The rest of the error list. */
 } error;
 
-error* error_make(char *text, unsigned int line);
+error* error_make(unsigned int line, char *format, ...);
 void error_print(error *err);
 void error_destroy(error *err);
 

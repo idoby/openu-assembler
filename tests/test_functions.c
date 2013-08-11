@@ -49,10 +49,10 @@ static int __default_translate_test_line(const char *line, int should_pass, cons
 static int __TEST_default_translate(void)
 {
 #define test_assert_parsed(line)	\
-	do { __default_translate_test_line((line), 1, "Line NOT parsed successfully: " S__LINE__); } while(0)
+	do { if (__default_translate_test_line((line), 1, "Line NOT parsed successfully: " S__LINE__)) return TEST_FAILURE; } while(0)
 
 #define test_assert_not_parsed(line)	\
-	do { __default_translate_test_line((line), 0, "Line parsed successfully: " S__LINE__); } while(0)
+	do { if (__default_translate_test_line((line), 0, "Line parsed successfully: " S__LINE__)) return TEST_FAILURE; } while(0)
 
 	/* Comment tests. */
 	test_assert_parsed("       ; this is a dandy comment\n");
@@ -294,13 +294,16 @@ static int __TEST_list_test_empty(void)
 static int __TEST_error(void)
 {
 	error *err1, *err2;
-	err1 = error_make("TEST ERROR #1", 456);
-	err2 = error_make("TEST ERROR #2, NO LINE", ERROR_NO_LINE);
+	int i = 0;
+	for (; i < 10; ++i)
+	{
+		err1 = error_make(456 + i, "TEST ERROR #%d", i);
+		error_print(err1);
+		error_destroy(err1);
+	}
 
-	error_print(err1);
+	err2 = error_make(ERROR_NO_LINE, "Overall number of errors: %d", i);
 	error_print(err2);
-
-	error_destroy(err1);
 	error_destroy(err2);
 
 	return TEST_SUCCESS;

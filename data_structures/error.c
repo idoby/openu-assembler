@@ -3,19 +3,25 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
-error* error_make(char *text, unsigned int line)
+error* error_make(unsigned int line, char *format, ...)
 {
 	error *err;
+	va_list ap;
 
-	if (text == NULL)
+	if (format == NULL)
 		return NULL;
 
 	if ((err = malloc(sizeof(*err))) == NULL)
 		return NULL;
 
 	err->line = line;
-	strncpy(err->text, text, ERROR_TEXT_MAX);
+
+	va_start(ap, format);
+	vsprintf(err->text, format, ap);
+	va_end(ap);
+
 	list_init(&err->errors);
 
 	return err;
@@ -28,7 +34,7 @@ void error_print(error *err)
 
 	/* Error is associated with a line. */
 	if (err->line != ERROR_NO_LINE)
-		printf("@ line #%d: ", err->line);
+		printf("Error on line #%d: ", err->line);
 	
 	printf("%s\n", err->text);
 }
