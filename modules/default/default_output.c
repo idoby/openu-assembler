@@ -14,10 +14,12 @@ typedef struct default_output_context {
 	char	entries_file_name[MAX_FILE_NAME];
 	FILE*	entries_file;
 	
-	scratch_space *i_scratch;
-	scratch_space *d_scratch;
+	scratch_space 	*i_scratch;
+	scratch_space 	*d_scratch;
 
-	symbol_table *syms;
+	symbol_table 	*syms;
+
+	list 			*errors;
 } default_output_context; 
 
 output_ops default_output_ops = {	default_output_init,
@@ -25,11 +27,11 @@ output_ops default_output_ops = {	default_output_init,
 									default_output_destroy};
 
 output_context*	default_output_init
-				(char* file_name, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
+				(char* file_name, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors)
 {
 	default_output_context *doc;
 
-	if (file_name == NULL || i_scratch == NULL || d_scratch == NULL || syms == NULL)
+	if (file_name == NULL || i_scratch == NULL || d_scratch == NULL || syms == NULL || errors == NULL)
 		return NULL;
 
 	if ((doc = malloc(sizeof(*doc))) == NULL)

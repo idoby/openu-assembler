@@ -24,7 +24,6 @@ int main(int argc, char** argv)
 		assembler_dispatch(ass, default);
 
 		/* Process the file! */
-		printf("Processing file %s:\n", argv[argc]);
 		assembler_process(&ass, argv[argc]);
 
 		/* Destroy the assembler object. */

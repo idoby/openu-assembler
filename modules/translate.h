@@ -4,6 +4,7 @@
 #include <data_structures/intrusive_list.h>
 #include <data_structures/symbol_table.h>
 #include <data_structures/scratch_space.h>
+#include <data_structures/error.h>
 
 typedef void translate_context;
 
@@ -24,7 +25,7 @@ typedef enum translate_error {
 typedef struct translate_ops {
 						/* Module constructor. */
 	translate_context*	(*init)
-						(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch);
+						(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors);
 						/* Module destructor. */
 	void				(*destroy)(translate_context *tc);
 						/* Translate a single line. */

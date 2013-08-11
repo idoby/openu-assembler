@@ -11,7 +11,12 @@ typedef void output_context;
 
 typedef struct output_ops {
 	output_context*	(*init)							/* A time to build up. */
-					(char* file_name, symbol_table *syms, scratch_space *d_scratch, scratch_space *i_scratch);
+					(char* file_name,
+					 symbol_table *syms,
+					 scratch_space *d_scratch,
+					 scratch_space *i_scratch,
+					 list *errors);
+
 	unsigned int	(*dump)(output_context *oc);		/* To write. */
 					
 	void			(*destroy)(output_context *oc);	/* And to break down. */

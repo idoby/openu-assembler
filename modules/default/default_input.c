@@ -13,6 +13,7 @@ typedef struct default_input_context {
 	FILE*			f;
 	char			line[MAX_BUF];
 	unsigned int 	line_number;
+	list*			errors;
 } default_input_context;
 
 input_ops default_input_ops =
@@ -26,11 +27,11 @@ input_ops default_input_ops =
 static const char default_file_extension[] = ".as";
 static const size_t default_file_ext_len = sizeof(default_file_extension) - 1;
 
-input_context* default_input_init(char *file_name)
+input_context* default_input_init(char *file_name, list *errors)
 {
 	default_input_context* dic;
 
-	if (file_name == NULL)
+	if (file_name == NULL || errors == NULL)
 		return NULL;
 
 	/* Is the filename + extension short enough to fit in the buffer? */
@@ -41,6 +42,7 @@ input_context* default_input_init(char *file_name)
 		return NULL;
 
 	dic->line_number = 0;
+	dic->errors = errors;
 
 	/* Copy the file name and append the ".as" we need to open it. */
 	strncpy(dic->file_name, file_name, MAX_FILE_NAME);
@@ -49,6 +51,9 @@ input_context* default_input_init(char *file_name)
 
 	if ((dic->f = fopen(dic->file_name, "r")) == NULL)
 	{
+		error *err = error_make(ERROR_NO_LINE, "Unable to open file %s", dic->file_name);
+		list_insert_before(errors, &err->errors);
+
 		free(dic);
 		return NULL;
 	}

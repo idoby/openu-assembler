@@ -4,7 +4,7 @@
 #include <modules/translate.h>
 
 translate_context*	default_translate_init
-					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch);
+					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors);
 void				default_translate_destroy(translate_context *tc);
 translate_line_error default_translate_line(translate_context *tc, const char *line);
 unsigned int		default_is_program_valid(translate_context *tc);

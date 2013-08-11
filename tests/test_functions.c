@@ -15,8 +15,12 @@
 static int __TEST_default_input(void)
 {
 	input_ops input = default_input_ops;
+	list errors;
+	input_context *ic = NULL;
 
-	input_context *ic = input.init("ps");
+	list_init(&errors);
+
+	ic = input.init("ps", &errors);
 
 	test_assert(ic != NULL, "Failed to init input with \"ps.as\"!");
 
@@ -36,7 +40,7 @@ static int __default_translate_test_line(const char *line, int should_pass, cons
 
 	assembler_init(&ass);
 	assembler_dispatch(ass, default);
-	ass.tc = ass.translate_ops.init(&ass.sym_table, &ass.i_scratch, &ass.d_scratch);
+	ass.tc = ass.translate_ops.init(&ass.sym_table, &ass.i_scratch, &ass.d_scratch, &ass.errors);
 
 	test_assert((ass.translate_ops.translate_line(ass.tc, line) == TRANSLATE_LINE_SUCCESS) == should_pass,
 				message);

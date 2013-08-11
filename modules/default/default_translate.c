@@ -19,6 +19,7 @@ typedef struct default_translate_context {
 	symbol_table 	*syms;
 	scratch_space 	*i_scratch;
 	scratch_space 	*d_scratch;
+	list			*errors;
 } default_translate_context;
 
 translate_ops default_translate_ops = 
@@ -65,11 +66,11 @@ static const char DIRECTIVE_EXTERN[]	= "extern";
 #define is_valid_register(p) ((p)[0] == REGISTER_PREFIX && (p)[1] >= REGISTER_FIRST_NUMBER && (p)[1] <= REGISTER_FIRST_NUMBER + NUM_REGISTERS - 1)
 
 translate_context*	default_translate_init
-					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
+					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors)
 {
 	default_translate_context *dtc;
 
-	if (syms == NULL || i_scratch == NULL || d_scratch == NULL)
+	if (syms == NULL || i_scratch == NULL || d_scratch == NULL || errors == NULL)
 		return NULL;
 
 	if ((dtc = malloc(sizeof(*dtc))) == NULL)
@@ -80,6 +81,7 @@ translate_context*	default_translate_init
 	dtc->syms	= syms;
 	dtc->i_scratch = i_scratch;
 	dtc->d_scratch = d_scratch;
+	dtc->errors = errors;
 
 	list_init(&dtc->insts);
 
