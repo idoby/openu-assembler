@@ -1,6 +1,4 @@
-/*TODO: remove these if not needed. */
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -132,6 +130,7 @@ static const char* __skip_whitespace(const char *p)
 
 #include "default_translate_verify.c"
 #include "default_translate_parse.c"
+#include "default_translate_finalize.c"
 
 translate_line_error default_translate_line(translate_context *tc, const char *line)
 {
@@ -168,6 +167,7 @@ unsigned int default_is_program_valid(translate_context *tc)
 translate_error default_translate_finalize(translate_context *tc)
 {
 	default_translate_context *dtc = tc;
+	default_instruction *inst;
 
 	if (dtc == NULL)
 		return TRANSLATE_BAD_PARAMS;
@@ -175,12 +175,12 @@ translate_error default_translate_finalize(translate_context *tc)
 	if (!default_is_program_valid(tc))
 		return TRANSLATE_BAD_PROGRAM;
 
-	{
-		/* TODO: delete this test code. */
-		default_instruction *inst = NULL;
-		list_for_each_entry(&dtc->insts, inst, default_instruction, insts)
-			printf("%s\n", inst->proto->name);
-	}
+	/* Check that all symbols are properly defined (or set to external). */
+	if (!table_traverse(dtc->syms, __finalize_check_labels, dtc->errors))
+		return TRANSLATE_CANT_RESOLVE;
+
+	list_for_each_entry(&dtc->insts, inst, default_instruction, insts)
+		__finalize_translate_instruction(inst);
 
 	/* TODO: implement this function. */
 
