@@ -1,11 +1,11 @@
-typedef enum parse_label_error {
+typedef enum parse_symbol_error {
 	LABEL_EXISTS,
 	LABEL_ALLOC_ERROR,
 	LABEL_SET,
 	LABEL_NO_LABEL
-} parse_label_error;
+} parse_symbol_error;
 
-static parse_label_error __parse_assign_label(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int define)
+static parse_symbol_error __parse_assign_symbol(scratch_space *s, symbol_table *syms, const char* label, symbol_type type, unsigned int define)
 {
 	symbol *old_sym = NULL;
 	symbol *new_sym = NULL;
@@ -42,9 +42,19 @@ static parse_label_error __parse_assign_label(scratch_space *s, symbol_table *sy
 	return LABEL_SET;
 }
 
+static symbol* __parse_get_symbol(symbol_table *syms, const char *label)
+{
+	symbol *sym = table_find_symbol(syms, label);
+
+	if (sym != NULL)
+		return sym;
+
+	return table_new_symbol(syms, label);
+}
+
 static int __parse_define_label(scratch_space *s, symbol_table *syms, const char *label)
 {
-	switch (__parse_assign_label(s, syms, label, INTERN, 1))
+	switch (__parse_assign_symbol(s, syms, label, INTERN, 1))
 	{
 		case LABEL_EXISTS:
 			return 0; /* TODO: label is a duplicate, error message. */
@@ -59,7 +69,7 @@ static int __parse_define_label(scratch_space *s, symbol_table *syms, const char
 	}
 }
 
-static parse_label_error __parse_label(const char *p, char out_sym[SYMBOL_MAX_LENGTH + 1])
+static parse_symbol_error __parse_label(const char *p, char out_sym[SYMBOL_MAX_LENGTH + 1])
 {
 	unsigned int index = 0;
 	const char* p2 = p;
@@ -79,18 +89,40 @@ static parse_label_error __parse_label(const char *p, char out_sym[SYMBOL_MAX_LE
 	return LABEL_NO_LABEL;
 }
 
-static const char* __parse_number_list(scratch_space *s, const char *p)
+static const char* __parse_number(long int *num, const char *p)
 {
-	long int data_item = 0;
 	char *data_end = NULL;
 
+	/* Parse data item. */
+	*num = strtol(p, &data_end, 10);
+
+	return data_end;
+}
+
+static const char* __parse_register(int *reg_num, const char *p)
+{
+	*reg_num = INVALID_REGISTER;
+
+	if (p[0] == '\0' || p[1] == '\0')
+		return p;
+
+	if (is_valid_register(p))
+	{
+		*reg_num = p[1] - REGISTER_FIRST_NUMBER;
+		return p + REGISTER_NAME_WIDTH;
+	}
+
+	return p;
+}
+
+static const char* __parse_number_list(scratch_space *s, const char *p)
+{
 	while (1)
 	{
-		/* Parse data item. */
-		data_item = strtol(p, &data_end, 10);
-		scratch_write_next_data(s, data_item, ABSOLUTE);
+		long int num = 0;
 
-		p = __skip_whitespace(data_end);
+		p = __skip_whitespace(__parse_number(&num, p));
+		scratch_write_next_data(s, num, ABSOLUTE);
 
 		/* If a comma is present, we need to consume one more number. */
 		if (*p != SEPARATOR || __islineterm(*p))
@@ -137,7 +169,7 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 		/* 	Define the label, or quit if unsuccessful.
 		 	The label should be defined only if it's external.
 		 	Entry labels still require a definition in the file. */
-		switch (__parse_assign_label(NULL, dtc->syms, label, type, type == EXTERN))
+		switch (__parse_assign_symbol(NULL, dtc->syms, label, type, type == EXTERN))
 		{
 			case LABEL_ALLOC_ERROR:
 				return NULL; /* TODO: error message. */
@@ -242,9 +274,132 @@ static const char* __parse_modifiers(const char *p, default_instruction *inst)
 	return ++p;
 }
 
-static const char* __parse_operands(const char *p, default_instruction *inst)
+static const char* __parse_operand(default_translate_context *dtc, const char *p, default_instruction *inst, address *ad)
 {
-	/* TODO: implement */
+	int reg_num = INVALID_REGISTER;
+
+	if (*p == IMMEDIATE_INDICATOR)
+	{
+		long int num = 0;
+
+		/* Skip the # and parse the number. */
+		p = __skip_whitespace(__parse_number(&num, p + 1));
+
+		default_address_set_immediate(ad, num);
+
+		/* Write the number to reserve space. */
+		scratch_write_next_data(dtc->i_scratch, num, ABSOLUTE);
+
+		return p;
+	}
+
+	p = __parse_register(&reg_num, p);
+
+	/* We have a register name. */
+	if (reg_num != INVALID_REGISTER)
+	{
+		default_address_set_register(ad, reg_num);
+		return p;
+	}
+	else
+	{
+		/* Otherwise, a label name must follow. */
+		char first_label[SYMBOL_MAX_LENGTH + 1] = {0};
+		symbol *first_sym = NULL;
+
+		__parse_label(p, first_label);
+		p = __skip_whitespace(p + strlen(first_label));
+
+		/* Find or create a new symbol. */
+		first_sym = __parse_get_symbol(dtc->syms, first_label);
+
+		if (first_sym == NULL)
+			return NULL; /* TODO: error message. */
+
+		default_address_set_symbol(ad, first_sym);
+
+		/*	Mark this instruction as a reference to the symbol
+			and write some zeroes to reserve space for this symbol. */
+		table_add_reference(first_sym, inst);
+		scratch_write_next_data(dtc->i_scratch, 0, ABSOLUTE);
+
+		/* Do we have an index or just a symbol address? */
+		if (*p != INDEX_START)
+			return p;
+
+		p = __skip_whitespace(p + 1);
+
+		/* If the next character is a number, this is a number. */
+		if (isdigit(*p))
+		{
+			long int num = 0;
+
+			/* Skip the # and parse the number. */
+			p = __parse_number(&num, p);
+
+			default_address_set_index_number(ad, num);
+
+			/* Write the number to reserve space. */
+			scratch_write_next_data(dtc->i_scratch, num, ABSOLUTE);
+		}
+		else
+		{
+			p = __parse_register(&reg_num, p);
+
+			/* We have a register. */
+			if (reg_num != INVALID_REGISTER)
+				default_address_set_index_register(ad, reg_num);
+			else
+			{
+				char sec_label[SYMBOL_MAX_LENGTH + 1] = {0};
+				symbol *sec_sym = NULL;
+
+				/*	Otherwise this must be a label.
+					Skip the *. */
+				p = __skip_whitespace(p + 1);
+
+				__parse_label(p, sec_label);
+				p = __skip_whitespace(p + strlen(sec_label));
+
+				/* Find or create a new symbol. */
+				sec_sym = __parse_get_symbol(dtc->syms, sec_label);
+
+				if (sec_sym == NULL)
+					return NULL; /* TODO: error message. */
+
+				default_address_set_index_symbol(ad, sec_sym);
+
+				/*	Mark this instruction as a reference to the symbol
+				and write some zeroes to reserve space for this symbol. */
+				table_add_reference(sec_sym, inst);
+				scratch_write_next_data(dtc->i_scratch, 0, ABSOLUTE);
+			}
+		}
+
+		/* Skip the }. */
+		return __skip_whitespace(p) + 1;
+	}
+}
+
+static const char* __parse_operands(default_translate_context *dtc, const char *p, default_instruction *inst)
+{
+	unsigned int operand = 0;
+
+	for (; operand < inst->proto->num_operands; ++operand)
+	{
+		/*	Verify one operand, according to the allowed types in proto,
+			surrounded by whitespace. */
+		p = __skip_whitespace(p);
+		p = __skip_whitespace(__parse_operand(dtc, p, inst, &inst->operands[operand]));
+
+		if (p == NULL)
+			return NULL;
+
+		/* Consume the comma. */
+		if (operand != inst->proto->num_operands - 1)
+			++p;
+	}
+
 	return p;
 }
 
@@ -273,7 +428,10 @@ static const char* __parse_instruction(default_translate_context *dtc, const cha
 	p = __skip_whitespace(p + strlen(inst->proto->name));
 
 	p = __parse_modifiers(p, inst);
-	p = __parse_operands(p, inst);
+	p = __parse_operands(dtc, p, inst);
+
+	if (p == NULL)
+		goto parse_exit;
 
 	/* Add new instruction to the end of the instruction list in the context. */
 	list_insert_before(&dtc->insts, &inst->insts);
@@ -291,7 +449,7 @@ static translate_line_error __parse_line(default_translate_context *dtc, const c
 {
 #define LABEL_IF_EXISTS (line_label_exists == LABEL_EXISTS ? line_label : NULL)
 	const char line_label[SYMBOL_MAX_LENGTH + 1] = {0};
-	parse_label_error line_label_exists = LABEL_NO_LABEL;
+	parse_symbol_error line_label_exists = LABEL_NO_LABEL;
 
 	p = __skip_whitespace(p);
 

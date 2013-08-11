@@ -1,4 +1,6 @@
+/*TODO: remove these if not needed. */
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -29,6 +31,7 @@ translate_ops default_translate_ops =
 static const int  NUM_REGISTERS			= 8;
 static const int  REGISTER_NAME_WIDTH	= 2;
 static const char REGISTER_PREFIX		= 'r';
+static const char REGISTER_FIRST_NUMBER	= '0';
 static const char LINE_END				= '\n';
 static const char COMMENT_START 		= ';';
 static const char LABEL_INDICATOR		= ':';
@@ -59,6 +62,7 @@ static const char DIRECTIVE_ENTRY[]		= "entry";
 static const char DIRECTIVE_EXTERN[]	= "extern";
 
 #define is_directive(p,d) (strncmp((p), (d), strlen((d))) == 0)
+#define is_valid_register(p) ((p)[0] == REGISTER_PREFIX && (p)[1] >= REGISTER_FIRST_NUMBER && (p)[1] <= REGISTER_FIRST_NUMBER + NUM_REGISTERS - 1)
 
 translate_context*	default_translate_init
 					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch)
@@ -168,6 +172,13 @@ translate_error default_translate_finalize(translate_context *tc)
 
 	if (!default_is_program_valid(tc))
 		return TRANSLATE_BAD_PROGRAM;
+
+	{
+		/* TODO: delete this test code. */
+		default_instruction *inst = NULL;
+		list_for_each_entry(&dtc->insts, inst, default_instruction, insts)
+			printf("%s\n", inst->proto->name);
+	}
 
 	/* TODO: implement this function. */
 

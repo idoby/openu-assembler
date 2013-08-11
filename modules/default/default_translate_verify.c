@@ -3,7 +3,7 @@ static const char* __verify_register(const char *p)
 	if (p[0] == '\0' || p[1] == '\0')
 		return NULL;
 
-	if (p[0] == REGISTER_PREFIX && p[0] == REGISTER_PREFIX && p[1] >= '0' && p[1] <= '0' + NUM_REGISTERS - 1)
+	if (is_valid_register(p))
 		return p + REGISTER_NAME_WIDTH;
 
 	return NULL;
