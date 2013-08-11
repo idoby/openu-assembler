@@ -31,9 +31,9 @@ typedef struct symbol {
 #define table_entry(entry) container_of(symbol, entry, sym_tree)
 
 		/*	Prototype for function handling each symbol in the table in traversal. */
-typedef void (*table_visit_func)(table_element *symbol);
+typedef void (*table_visit_func)(table_element *symbol, void *arg);
 		/*	Prototype for function handling each instruction in a reference list in traversal. */
-typedef void (*table_consume_func)(void *inst);
+typedef void (*table_consume_func)(void *data, void *arg);
 
 		/*	Table initializer. Must be called after allocation. */
 void	table_init(symbol_table* table);
@@ -67,14 +67,14 @@ int		table_is_extern(symbol *sym);
 void 	table_destroy(symbol_table *table);
 
 		/*	Iterates over all symbols in the table. */
-void	table_traverse(symbol_table *table, table_visit_func visit);
+void	table_traverse(symbol_table *table, table_visit_func visit, void *arg);
 
 		/*	Add a new orphaned reference to a symbol.
 			Returns 1 on success or 0 on error. This is because I don't
 			want to expose the implementation of references to the client. */
-int		table_add_reference(symbol *sym, void *inst);
+int		table_add_reference(symbol *sym, void* data);
 
 		/*	Iterate over the references to a symbol, deleting them as we go. */
-void	table_consume_references(symbol *sym, table_consume_func consume);
+void	table_consume_references(symbol *sym, table_consume_func consume, void *arg);
 
 #endif

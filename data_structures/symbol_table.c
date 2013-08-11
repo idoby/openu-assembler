@@ -1,16 +1,17 @@
 #include <stdlib.h>
 #include <string.h>
+#include <utils.h>
 #include "symbol_table.h"
 
 #define table_insert(table, new) tree_insert(table, new, __table_compare_symbols)
 
 struct reference {
-	void *inst;
+	void *data;
 	list refs;
 };
 
 /* Delete a single element from the tree. */
-static void __delete_element(table_element *element)
+static void __delete_element(table_element *element, void *arg)
 {
 	struct reference *ref, *safe;
 	symbol *sym = table_entry(element);
@@ -28,6 +29,8 @@ static void __delete_element(table_element *element)
 
 	/* Deallocate symbol itself. */
 	free(sym);
+
+	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
 
 void table_init(symbol_table* table)
@@ -96,26 +99,26 @@ symbol*	table_find_symbol(symbol_table* table, const char* name)
 
 void table_destroy(symbol_table* table)
 {
-	tree_traverse(table, __delete_element);
+	tree_traverse(table, __delete_element, NULL);
 	table->root_node = NULL;
 }
 
-void table_traverse(symbol_table *table, table_visit_func visit)
+void table_traverse(symbol_table *table, table_visit_func visit, void *arg)
 {
-	tree_traverse(table, visit);
+	tree_traverse(table, visit, arg);
 }
 
-int table_add_reference(symbol *sym, void *inst)
+int table_add_reference(symbol *sym, void *data)
 {
 	struct reference *ref;
 
-	if (sym == NULL || inst == NULL)
+	if (sym == NULL || data == NULL)
 		return 0;
 
 	if ((ref = malloc(sizeof(*ref))) == NULL)
 		return 0;
 
-	ref->inst = inst;
+	ref->data = data;
 
 	/* Insert new reference object at the end of the list. */
 	list_insert_before(&sym->references, &ref->refs);
@@ -123,7 +126,7 @@ int table_add_reference(symbol *sym, void *inst)
 	return 1;
 }
 
-void table_consume_references(symbol *sym, table_consume_func consume)
+void table_consume_references(symbol *sym, table_consume_func consume, void *arg)
 {
 	struct reference *ref, *safe;
 
@@ -132,7 +135,7 @@ void table_consume_references(symbol *sym, table_consume_func consume)
 
 	list_for_each_entry_safe(&sym->references, ref, safe, struct reference, refs)
 	{
-		consume(ref->inst);
+		consume(ref->data, arg);
 
 		list_remove(&ref->refs);
 		free(ref);

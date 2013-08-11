@@ -7,4 +7,7 @@
 /* Calculate the number of elements in an array. */
 #define array_length(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+/* Making the compiler shut up about unused parameters we know we don't need to use. */
+#define UNUSED_PARAM(p) do { ((p) = (p)); } while(0)
+
 #endif

@@ -18,7 +18,7 @@ void tree_node_init(tree_node* node)
 	node->right	= NULL;
 }
 
-void __tree_insert(tree_node *node, tree_node *new, compare_func cmp)
+static void __tree_insert(tree_node *node, tree_node *new, compare_func cmp)
 {
 	int rel = cmp(node, new);
 	
@@ -56,7 +56,7 @@ void tree_insert(tree *root, tree_node *new, compare_func cmp)
 	__tree_insert(root->root_node, new, cmp);
 }
 
-tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
+static tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
 {
 	int rel = cmp(node, find);
 
@@ -90,24 +90,24 @@ tree_node* tree_search(tree *root, tree_node *find, compare_func cmp)
 }
 
 /* Post-order traversal to allow this routine to be used for deletion of the tree. */
-void __tree_traverse(tree_node *node, visit_func visit)
+static void __tree_traverse(tree_node *node, visit_func visit, void *arg)
 {
 	/* If left child exists, recurse. */
 	if (node->left != NULL)
-		__tree_traverse(node->left, visit);
+		__tree_traverse(node->left, visit, arg);
 
 	/* Now the right. */
 	if (node->right != NULL)
-		__tree_traverse(node->right, visit);
+		__tree_traverse(node->right, visit, arg);
 
 	/* Visit the node itself first. */
-	visit(node);
+	visit(node, arg);
 }
 
-void tree_traverse(tree *root, visit_func visit)
+void tree_traverse(tree *root, visit_func visit, void *arg)
 {
 	if (root == NULL || root->root_node == NULL || visit == NULL)
 		return;
 
-	__tree_traverse(root->root_node, visit);
+	__tree_traverse(root->root_node, visit, arg);
 }

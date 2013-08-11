@@ -2,6 +2,7 @@
 	Functions beginning with __TEST_ are actual test functions. */
 #include <stdlib.h>
 #include <stdio.h>
+#include <utils.h>
 #include <data_structures/symbol_table.h>
 #include <assembler.h>
 
@@ -167,12 +168,14 @@ static int __TEST_default_instruction_make(void)
 	return TEST_SUCCESS;
 }
 
-static void __print_symbols(table_element *element)
+static void __print_symbols(table_element *element, void *arg)
 {
 	symbol *sym = table_entry(element);
 
 	if (sym->name != NULL)
 		printf("SYMBOL: %s TYPE: %d\n", sym->name, sym->type);
+
+	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
 
 struct dummy_ref {
@@ -180,10 +183,12 @@ struct dummy_ref {
 	char a_char;
 } dref1, dref2;
 
-static void __print_refs(void *ref)
+static void __print_refs(void *ref, void *arg)
 {
 	struct dummy_ref *dref = ref; /* Converting from void* implicitly is fine.*/
 	printf("REF: %d, %c\n", dref->an_int, dref->a_char);
+
+	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
 
 static int __TEST_symbol_table(void)
@@ -203,13 +208,13 @@ static int __TEST_symbol_table(void)
 	test_assert(table_find_symbol(&assem.sym_table, "MOO") != NULL, "symbol 'MOO' not found.");
 	test_assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL, "non-existent symbol 'SHIT' found?");
 
-	table_traverse(&assem.sym_table, __print_symbols);
+	table_traverse(&assem.sym_table, __print_symbols, NULL);
 
 	moo = table_find_symbol(&assem.sym_table, "MOO");
 	table_add_reference(moo, &dref1);
 	table_add_reference(moo, &dref2);
 
-	table_consume_references(moo, __print_refs);
+	table_consume_references(moo, __print_refs, NULL);
 
 	table_destroy(&assem.sym_table);
 
