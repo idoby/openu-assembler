@@ -4,6 +4,7 @@
 #include "intrusive_list.h"
 
 #define ERROR_TEXT_MAX	512
+#define ERROR_NO_LINE	0
 
 typedef struct error
 {
@@ -13,6 +14,7 @@ typedef struct error
 } error;
 
 error* error_make(char *text, unsigned int line);
+void error_print(error *err);
 void error_destroy(error *err);
 
 #endif

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <utils.h>
 #include <data_structures/symbol_table.h>
+#include <data_structures/error.h>
 #include <assembler.h>
 
 #include <modules/default/default_input.h>
@@ -289,6 +290,22 @@ static int __TEST_list_test_empty(void)
 
 	return TEST_SUCCESS;
 }
+
+static int __TEST_error(void)
+{
+	error *err1, *err2;
+	err1 = error_make("TEST ERROR #1", 456);
+	err2 = error_make("TEST ERROR #2, NO LINE", ERROR_NO_LINE);
+
+	error_print(err1);
+	error_print(err2);
+
+	error_destroy(err1);
+	error_destroy(err2);
+
+	return TEST_SUCCESS;
+}
+
 /*	The list of tests to be run.
 	Add new tests here. */
 #define TEST_LIST(list_entry)		\
@@ -296,5 +313,6 @@ static int __TEST_list_test_empty(void)
 	list_entry(default_translate)	\
 	list_entry(default_instruction_make)	\
 	list_entry(symbol_table)		\
+	list_entry(error)				\
 	list_entry(list_test)			\
 	list_entry(list_test_empty)
