@@ -18,7 +18,7 @@ void tree_node_init(tree_node* node)
 	node->right	= NULL;
 }
 
-void __tree_insert(tree_node *node, tree_node *new, compare_func cmp)
+static void __tree_insert(tree_node *node, tree_node *new, compare_func cmp)
 {
 	int rel = cmp(node, new);
 	
@@ -56,7 +56,7 @@ void tree_insert(tree *root, tree_node *new, compare_func cmp)
 	__tree_insert(root->root_node, new, cmp);
 }
 
-tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
+static tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
 {
 	int rel = cmp(node, find);
 
@@ -66,13 +66,13 @@ tree_node* __tree_search(tree_node *node, tree_node *find, compare_func cmp)
 	/* If the current node is bigger than the one we're looking for, go left. */
 	else if (rel == 1) {
 		if (node->left != NULL)
-			__tree_search(node->left, find, cmp);
+			return __tree_search(node->left, find, cmp);
 		else
 			return NULL;
 	}
 	else if (rel == -1) {
 		if (node->right != NULL)
-			__tree_search(node->right, find, cmp);
+			return __tree_search(node->right, find, cmp);
 		else
 			return NULL;
 	}
@@ -90,24 +90,25 @@ tree_node* tree_search(tree *root, tree_node *find, compare_func cmp)
 }
 
 /* Post-order traversal to allow this routine to be used for deletion of the tree. */
-void __tree_traverse(tree_node *node, visit_func visit)
+static int __tree_traverse(tree_node *node, visit_func visit, void *arg)
 {
+	int status = 1;
 	/* If left child exists, recurse. */
 	if (node->left != NULL)
-		__tree_traverse(node->left, visit);
+		status = __tree_traverse(node->left, visit, arg);
 
 	/* Now the right. */
 	if (node->right != NULL)
-		__tree_traverse(node->right, visit);
+		status = __tree_traverse(node->right, visit, arg) && status;
 
 	/* Visit the node itself first. */
-	visit(node);
+	return visit(node, arg) && status;
 }
 
-void tree_traverse(tree *root, visit_func visit)
+int tree_traverse(tree *root, visit_func visit, void *arg)
 {
 	if (root == NULL || root->root_node == NULL || visit == NULL)
-		return;
+		return 0;
 
-	__tree_traverse(root->root_node, visit);
+	return __tree_traverse(root->root_node, visit, arg);
 }

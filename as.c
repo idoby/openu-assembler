@@ -1,10 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "assembler.h"
-#include "default_input.h"
+#include <assembler.h>
+#include <modules/default/default_input.h>
+#include <modules/default/default_translate.h>
+#include <modules/default/default_output.h>
 
-#include "tests.h"
+#include <tests/tests.h>
 
 int main(int argc, char** argv)
 {
@@ -18,13 +20,15 @@ int main(int argc, char** argv)
 	{
 		/* Assemble the assembler! :D */
 		assembler ass;
-		ass.input_ops = default_input_ops;
+		assembler_init(&ass);
+		assembler_dispatch(ass, default);
 
-		printf("%d\n", argc);
-		printf("%s\n", argv[argc]);
+		/* Process the file! */
+		assembler_process(&ass, argv[argc]);
+
+		/* Destroy the assembler object. */
+		assembler_destroy(&ass);
 	}
-
-
 
 	return 0;
 }

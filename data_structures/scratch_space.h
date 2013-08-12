@@ -1,6 +1,6 @@
 #ifndef __SCRATCH_SPACE_H
 #define __SCRATCH_SPACE_H
-#include "utils.h"
+#include <utils.h>
 
 /* Size of memory space. */
 #define MAX_MEM 2000
@@ -23,5 +23,13 @@ typedef struct scratch_space {
 	unsigned int offset_next;					/* DC/IC, offset of the next word to be written to the buffer. */
 	unsigned int offset_global;					/* Offset from which the buffer is dumped to memory. */
 } scratch_space;
+
+void		scratch_init(scratch_space *s);
+void		scratch_rewind(scratch_space *s);
+unsigned int scratch_read_next_data(scratch_space *s, unsigned int *data, mem_cell_type *type);
+void		scratch_write_next_data(scratch_space *s, unsigned int data, mem_cell_type type);
+void		scratch_set_global_offset(scratch_space *s, unsigned int offset);
+unsigned int scratch_get_next_offset(scratch_space *s);
+unsigned int scratch_get_global_offset(scratch_space *s, unsigned int position);
 
 #endif

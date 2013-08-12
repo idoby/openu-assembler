@@ -1,25 +1,26 @@
 #include <stdlib.h>
 #include <string.h>
+#include <utils.h>
 #include "symbol_table.h"
 
 #define table_insert(table, new) tree_insert(table, new, __table_compare_symbols)
 
-struct orphaned_reference {
-	void *inst;
+struct reference {
+	unsigned int offset;
 	list refs;
 };
 
 /* Delete a single element from the tree. */
-static void __delete_element(table_element *element)
+static int __delete_element(table_element *element, void *arg)
 {
-	struct orphaned_reference *ref, *safe;
+	struct reference *ref, *safe;
 	symbol *sym = table_entry(element);
 
-	/* Delete orphaned references, if any exist. */
-	list_for_each_entry_safe(	&sym->orphaned_references,
+	/* Delete references, if any exist. */
+	list_for_each_entry_safe(	&sym->references,
 								ref,
 								safe,
-								struct orphaned_reference,
+								struct reference,
 								refs)
 	{
 		list_remove(&ref->refs);
@@ -28,6 +29,10 @@ static void __delete_element(table_element *element)
 
 	/* Deallocate symbol itself. */
 	free(sym);
+
+	return 1;
+
+	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
 
 void table_init(symbol_table* table)
@@ -54,7 +59,7 @@ static int __table_compare_symbols(tree_node *e1, tree_node* e2)
 	return 0;
 }
 
-symbol* table_new_symbol(symbol_table* table, const char* name, symbol_type type)
+symbol* table_new_symbol(symbol_table* table, const char* name)
 {
 	symbol *sym;
 
@@ -62,12 +67,13 @@ symbol* table_new_symbol(symbol_table* table, const char* name, symbol_type type
 		return NULL;
 
 	/* Initialize the new symbol object. */
-	sym->type = type;
-	sym->address_space = NULL;
-	sym->address_offset = 0;
+	sym->type			= INTERN;
+	sym->defined		= 0;
+	sym->address_space	= NULL;
+	sym->address_offset	= 0;
 	strncpy(sym->name, name, SYMBOL_MAX_LENGTH + 1);
 	sym->name[SYMBOL_MAX_LENGTH] = '\0';
-	list_init(&sym->orphaned_references);
+	list_init(&sym->references);
 	tree_node_init(&sym->sym_tree);
 
 	/* Insert into table. */
@@ -95,45 +101,85 @@ symbol*	table_find_symbol(symbol_table* table, const char* name)
 
 void table_destroy(symbol_table* table)
 {
-	tree_traverse(table, __delete_element);
+	tree_traverse(table, __delete_element, NULL);
 	table->root_node = NULL;
 }
 
-void table_traverse(symbol_table *table, table_visit_func visit)
+int table_traverse(symbol_table *table, table_visit_func visit, void *arg)
 {
-	tree_traverse(table, visit);
+	return tree_traverse(table, visit, arg);
 }
 
-int table_add_reference(symbol *sym, void *inst)
+int table_add_reference(symbol *sym, unsigned int offset)
 {
-	struct orphaned_reference *ref;
+	struct reference *ref;
 
-	if (sym == NULL || inst == NULL)
+	if (sym == NULL)
 		return 0;
 
 	if ((ref = malloc(sizeof(*ref))) == NULL)
 		return 0;
 
-	ref->inst = inst;
+	ref->offset = offset;
 
 	/* Insert new reference object at the end of the list. */
-	list_insert_before(&sym->orphaned_references, &ref->refs);
+	list_insert_before(&sym->references, &ref->refs);
 
 	return 1;
 }
 
-void table_consume_references(symbol *sym, table_consume_func consume)
+void table_consume_references(symbol *sym, table_consume_func consume, void *arg)
 {
-	struct orphaned_reference *ref, *safe;
+	struct reference *ref, *safe;
 
 	if (sym == NULL || consume == NULL)
 		return;
 
-	list_for_each_entry_safe(&sym->orphaned_references, ref, safe, struct orphaned_reference, refs)
+	list_for_each_entry_safe(&sym->references, ref, safe, struct reference, refs)
 	{
-		consume(ref->inst);
+		consume(sym, ref->offset, arg);
 
 		list_remove(&ref->refs);
 		free(ref);
 	}
+}
+
+void table_set_address_space(symbol *sym, struct scratch_space *s, unsigned int offset)
+{
+	if (sym == NULL || s == NULL)
+		return;
+
+	sym->address_space	= s;
+	sym->address_offset	= offset;
+}
+
+void table_set_type(symbol *sym, symbol_type type)
+{
+	if (sym == NULL)
+		return;
+
+	sym->type = type;
+}
+
+void table_set_defined(symbol *sym)
+{
+	if (sym == NULL)
+		return;
+
+	sym->defined = 1;
+}
+
+int table_is_defined(symbol *sym)
+{
+	return sym == NULL ? 0 : sym->defined;
+}
+
+int table_is_entry(symbol *sym)
+{
+	return sym == NULL ? 0 : (sym->type == ENTRY);
+}
+
+int table_is_extern(symbol *sym)
+{
+	return sym == NULL ? 0 : (sym->type == EXTERN);
 }
