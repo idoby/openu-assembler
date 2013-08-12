@@ -33,7 +33,7 @@ static parse_symbol_error __parse_assign_symbol(scratch_space *s, symbol_table *
 	if (s != NULL)
 		table_set_address_space(new_sym, s, scratch_get_next_offset(s));
 
-	if (define && !table_is_entry(new_sym))
+	if ((define && !table_is_entry(new_sym)) || type == ENTRY)
 		table_set_type(new_sym, type);
 
 	if (define)
@@ -320,6 +320,7 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 	{
 		/* Otherwise, a label name must follow. */
 		char first_label[SYMBOL_MAX_LENGTH + 1] = {0};
+		unsigned int first_label_off = 0;
 		symbol *first_sym = NULL;
 
 		__parse_label(p, first_label);
@@ -339,7 +340,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 		/*	Mark this instruction as a reference to the symbol
 			and write some zeroes to reserve space for this symbol. */
-		table_add_reference(first_sym, scratch_get_next_offset(is));
+		first_label_off = scratch_get_global_offset(is, scratch_get_next_offset(is));
+		table_add_reference(first_sym, first_label_off);
 		scratch_write_next_data(is, 0, ABSOLUTE);
 
 		/* Do we have an index or just a symbol address? */
@@ -371,6 +373,7 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 			else
 			{
 				char sec_label[SYMBOL_MAX_LENGTH + 1] = {0};
+				unsigned int sec_label_off = 0;
 				symbol *sec_sym = NULL;
 
 				/*	Otherwise this must be a label.
@@ -394,7 +397,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 				/*	Mark this instruction as a reference to the symbol
 				and write some zeroes to reserve space for this symbol. */
-				table_add_reference(sec_sym, scratch_get_next_offset(is));
+				sec_label_off = scratch_get_global_offset(is, scratch_get_next_offset(is));
+				table_add_reference(sec_sym, sec_label_off);
 				scratch_write_next_data(is, 0, ABSOLUTE);
 			}
 		}

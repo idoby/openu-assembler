@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "default_input.h"
+#include <data_structures/error.h>
 
-#include "assembler.h"
+#include "default_input.h"
 
 #define MAX_BUF 1024
 
