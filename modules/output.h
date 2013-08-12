@@ -3,6 +3,7 @@
 
 #include <data_structures/symbol_table.h>
 #include <data_structures/scratch_space.h>
+#include <data_structures/intrusive_list.h>
 
 
 #define MAX_FILE_NAME	256
