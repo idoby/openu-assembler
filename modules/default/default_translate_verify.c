@@ -144,7 +144,7 @@ static const char* __verify_directive(const char *p)
 	return NULL; /* This is not a valid directive line. */
 }
 
-static const char* __verify_modifiers(const char *p, default_ins_prototype *proto)
+static const char* __verify_modifiers(const char *p)
 {
 	p = __skip_whitespace(p);
 
@@ -160,7 +160,7 @@ static const char* __verify_modifiers(const char *p, default_ins_prototype *prot
 
 		++p;
 
-		for (; operand < proto->num_operands; ++operand)		
+		for (; operand < MAX_OPERANDS; ++operand)		
 		{
 			p = __skip_whitespace(p);
 			if (*p++ != INST_MOD_DELIMITER) /* Find the /. */
@@ -277,7 +277,7 @@ static const char* __verify_instruction(const char *p)
 	p += strlen(inst->name);
 
 	/* Verify the modifiers after the instruction name. */
-	p = __verify_modifiers(p, inst);
+	p = __verify_modifiers(p);
 	
 	if (p == NULL)
 		return NULL;

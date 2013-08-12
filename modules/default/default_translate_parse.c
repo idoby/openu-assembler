@@ -257,7 +257,7 @@ static const char* __parse_modifiers(const char *p, default_instruction *inst)
 		inst->type = 1;
 		++p;
 
-		for (; operand < inst->proto->num_operands; ++operand)		
+		for (; operand < MAX_OPERANDS; ++operand)		
 		{
 			/* Skip the /. */
 			p = __skip_whitespace(p + 1);

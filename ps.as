@@ -11,12 +11,12 @@
 MAIN:	lea/0,0 STR{*LEN}, STRADD
 		jsr /0,0 COUNT
 		jsr /0,0 PRTSTR
-		mov/1/1/0,0 STRADD{5}, LASTCHAR {  r3 }
+		mov/1/1/0,0 STRADD{-5}, LASTCHAR {  r3 }
 		mov/1/1/1,0 STR{7}, r7
 		add/0,0 COUNT{*K},r3
-		dec/1/1,0 LASTCHAR{*K}				;dec/1/1/1,0 LASTCHAR{*K}
+		dec/1/1/1,0 LASTCHAR{*K}
 		inc/0,1 K
-		prn/0,1 #-7
+;		prn/0,1 #-7
 		jsr /0,0 REVERSE
 		jsr /0,0 PRTSTR
 		stop/0,0
