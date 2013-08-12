@@ -27,6 +27,8 @@ translate_ops default_translate_ops =
 					default_is_program_valid,
 					default_translate_finalize };
 
+#define INSTRUCTION_SPACE_BEGIN	100
+
 static const int  NUM_REGISTERS			= 8;
 static const int  REGISTER_NAME_WIDTH	= 2;
 static const char REGISTER_PREFIX		= 'r';
@@ -76,8 +78,11 @@ translate_context*	default_translate_init
 	
 	dtc->line_number 	= 0;
 	dtc->program_valid	= 1;
-	dtc->syms	= syms;
+	dtc->syms			= syms;
+
 	dtc->i_scratch = i_scratch;
+	scratch_set_global_offset(i_scratch, INSTRUCTION_SPACE_BEGIN);
+
 	dtc->d_scratch = d_scratch;
 	dtc->errors = errors;
 
@@ -168,6 +173,7 @@ translate_error default_translate_finalize(translate_context *tc)
 {
 	default_translate_context *dtc = tc;
 	default_instruction *inst;
+	unsigned int data_global_offset = 0;
 
 	if (dtc == NULL)
 		return TRANSLATE_BAD_PARAMS;
@@ -179,10 +185,15 @@ translate_error default_translate_finalize(translate_context *tc)
 	if (!table_traverse(dtc->syms, __finalize_check_labels, dtc->errors))
 		return TRANSLATE_CANT_RESOLVE;
 
-	list_for_each_entry(&dtc->insts, inst, default_instruction, insts)
-		__finalize_translate_instruction(inst);
+	/* Set the offset to the data space to be one past the end of the instruction space. */
+	data_global_offset = scratch_get_global_offset(dtc->i_scratch, scratch_get_next_offset(dtc->i_scratch));
+	scratch_set_global_offset(dtc->d_scratch, data_global_offset);
 
-	/* TODO: implement this function. */
+	/* Rewind the scratch space so that we can do the proper instruction translation pass. */
+	scratch_rewind(dtc->i_scratch);
+
+	list_for_each_entry(&dtc->insts, inst, default_instruction, insts)
+		__finalize_translate_instruction(dtc, inst);
 
 	return TRANSLATE_SUCCESS;
 }

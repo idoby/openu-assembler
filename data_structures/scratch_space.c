@@ -60,7 +60,7 @@ unsigned int scratch_get_next_offset(scratch_space *s)
 	return s == NULL ? 0 : s->offset_next;
 }
 
-unsigned int scratch_calculate_global_position(scratch_space *s, unsigned int position)
+unsigned int scratch_get_global_offset(scratch_space *s, unsigned int position)
 {
 	return s == NULL ? 0 : position + s->offset_global; 
 }
