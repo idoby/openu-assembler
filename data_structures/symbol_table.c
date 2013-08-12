@@ -6,7 +6,7 @@
 #define table_insert(table, new) tree_insert(table, new, __table_compare_symbols)
 
 struct reference {
-	void *data;
+	unsigned int offset;
 	list refs;
 };
 
@@ -110,17 +110,17 @@ int table_traverse(symbol_table *table, table_visit_func visit, void *arg)
 	return tree_traverse(table, visit, arg);
 }
 
-int table_add_reference(symbol *sym, void *data)
+int table_add_reference(symbol *sym, unsigned int offset)
 {
 	struct reference *ref;
 
-	if (sym == NULL || data == NULL)
+	if (sym == NULL)
 		return 0;
 
 	if ((ref = malloc(sizeof(*ref))) == NULL)
 		return 0;
 
-	ref->data = data;
+	ref->offset = offset;
 
 	/* Insert new reference object at the end of the list. */
 	list_insert_before(&sym->references, &ref->refs);
@@ -137,7 +137,7 @@ void table_consume_references(symbol *sym, table_consume_func consume, void *arg
 
 	list_for_each_entry_safe(&sym->references, ref, safe, struct reference, refs)
 	{
-		consume(ref->data, arg);
+		consume(sym, ref->offset, arg);
 
 		list_remove(&ref->refs);
 		free(ref);

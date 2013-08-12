@@ -287,10 +287,11 @@ static const char* __parse_modifiers(const char *p, default_instruction *inst)
 	return ++p;
 }
 
-static const char* __parse_operand(default_translate_context *dtc, const char *p, default_instruction *inst, address *ad)
+static const char* __parse_operand(default_translate_context *dtc, const char *p, address *ad)
 {
 	error *err = NULL;
 	int reg_num = INVALID_REGISTER;
+	scratch_space *is = dtc->i_scratch;
 
 	if (*p == IMMEDIATE_INDICATOR)
 	{
@@ -302,7 +303,7 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 		default_address_set_immediate(ad, num);
 
 		/* Write the number to reserve space. */
-		scratch_write_next_data(dtc->i_scratch, num, ABSOLUTE);
+		scratch_write_next_data(is, num, ABSOLUTE);
 
 		return p;
 	}
@@ -338,8 +339,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 		/*	Mark this instruction as a reference to the symbol
 			and write some zeroes to reserve space for this symbol. */
-		table_add_reference(first_sym, inst);
-		scratch_write_next_data(dtc->i_scratch, 0, ABSOLUTE);
+		table_add_reference(first_sym, scratch_get_next_offset(is));
+		scratch_write_next_data(is, 0, ABSOLUTE);
 
 		/* Do we have an index or just a symbol address? */
 		if (*p != INDEX_START)
@@ -358,7 +359,7 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 			default_address_set_index_number(ad, num);
 
 			/* Write the number to reserve space. */
-			scratch_write_next_data(dtc->i_scratch, num, ABSOLUTE);
+			scratch_write_next_data(is, num, ABSOLUTE);
 		}
 		else
 		{
@@ -393,8 +394,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 				/*	Mark this instruction as a reference to the symbol
 				and write some zeroes to reserve space for this symbol. */
-				table_add_reference(sec_sym, inst);
-				scratch_write_next_data(dtc->i_scratch, 0, ABSOLUTE);
+				table_add_reference(sec_sym, scratch_get_next_offset(is));
+				scratch_write_next_data(is, 0, ABSOLUTE);
 			}
 		}
 
@@ -412,7 +413,7 @@ static const char* __parse_operands(default_translate_context *dtc, const char *
 		/*	Verify one operand, according to the allowed types in proto,
 			surrounded by whitespace. */
 		p = __skip_whitespace(p);
-		p = __skip_whitespace(__parse_operand(dtc, p, inst, &inst->operands[operand]));
+		p = __skip_whitespace(__parse_operand(dtc, p, &inst->operands[operand]));
 
 		if (p == NULL)
 			return NULL;

@@ -185,23 +185,15 @@ static int __print_symbols(table_element *element, void *arg)
 	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
 
-struct dummy_ref {
-	int an_int;
-	char a_char;
-} dref1, dref2;
-
-static void __print_refs(void *ref, void *arg)
+static void __print_refs(symbol *sym, unsigned int offset, void *arg)
 {
-	struct dummy_ref *dref = ref; /* Converting from void* implicitly is fine.*/
-	printf("REF: %d, %c\n", dref->an_int, dref->a_char);
+	printf("REF: %s, %d\n", sym->name, offset);
 
 	UNUSED_PARAM(arg); /* Shut up compiler. */
 }
 
 static int __TEST_symbol_table(void)
 {
-	struct dummy_ref dref1 = {1234, 'A'}, dref2 = {431, 'Z'};
-
 	assembler assem;
 	symbol *moo = NULL;
 
@@ -218,8 +210,8 @@ static int __TEST_symbol_table(void)
 	table_traverse(&assem.sym_table, __print_symbols, NULL);
 
 	moo = table_find_symbol(&assem.sym_table, "MOO");
-	table_add_reference(moo, &dref1);
-	table_add_reference(moo, &dref2);
+	table_add_reference(moo, 1234);
+	table_add_reference(moo, 431);
 
 	table_consume_references(moo, __print_refs, NULL);
 
