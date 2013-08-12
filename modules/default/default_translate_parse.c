@@ -150,6 +150,9 @@ static const char* __parse_string_list(scratch_space *s, const char *p)
 			++p;
 		}
 
+		/* Write a "null terminator" for the string. */
+		scratch_write_next_data(s, '\0', ABSOLUTE);
+
 		p = __skip_whitespace(p + 1); /* Skip the " and whitespace. */
 
 		/* If a comma is present, we need to consume one more number. */
@@ -344,8 +347,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 		p = __skip_whitespace(p + 1);
 
-		/* If the next character is a number, this is a number. */
-		if (isdigit(*p))
+		/* If the next character is a digit, a + or a -, this is a number. */
+		if (isdigit(*p) || *p == POSITIVE_INDICATOR || *p == NEGATIVE_INDICATOR)
 		{
 			long int num = 0;
 
