@@ -106,7 +106,6 @@ static void __finalize_write_direct(scratch_space *s, symbol *sym)
 		scratch_write_next_data(s,	0, EXTERNAL);
 	else
 	{
-		/* TODO: encapsulate the access to the symbol. */
 		global_off = scratch_get_global_offset(	sym->address_space,
 												sym->address_offset);
 		scratch_write_next_data(s, global_off, RELOCATABLE);
