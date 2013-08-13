@@ -269,7 +269,7 @@ static const char* __parse_modifiers(const char *p, default_instruction *inst)
 
 			++p;
 
-			if (operand != inst->proto->num_operands - 1)
+			if (operand != MAX_OPERANDS - 1)
 				inst-> comb <<= 1;
 		}
 	}
