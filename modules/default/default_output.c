@@ -23,6 +23,9 @@ output_ops default_output_ops = {	default_output_init,
 									default_output_dump,
 									default_output_destroy};
 
+#define HIGHEST_BIT		(1 << 19)
+#define EXTENSION_BIT	(1 << 20)
+
 static const char object_file_extension[] = ".ob";
 static const size_t object_file_ext_len = sizeof(object_file_extension) - 1;
 
@@ -127,9 +130,25 @@ static int __output_print_externs(table_element *elem, void *arg)
 	return 1;
 }
 
+unsigned char __output_type_convert(unsigned int type)
+{
+	switch (type)
+	{
+		case ABSOLUTE:
+			return 'a';
+		case RELOCATABLE:
+			return 'r';
+		case EXTERNAL:
+			return 'e';
+		default:
+			return 'f'; /* Not possible. */
+	}
+}
+
 unsigned int default_output_dump(output_context *oc)
 {
 	default_output_context *doc = oc;
+	scratch_space *is = doc->i_scratch, *ds = doc->d_scratch;
 	unsigned int success = 1;
 	unsigned int i_words, d_words, dump_externs = 0, dump_entries = 0;
 	FILE *object_file = NULL, *extern_file = NULL, *entry_file = NULL;
@@ -137,8 +156,8 @@ unsigned int default_output_dump(output_context *oc)
 	if (doc == NULL)
 		return 0;
 
-	i_words = scratch_get_next_offset(doc->i_scratch);
-	d_words = scratch_get_next_offset(doc->d_scratch);
+	i_words = scratch_get_next_offset(is);
+	d_words = scratch_get_next_offset(ds);
 
 	/* Check if there are any externs and entries that we need to output. */
 	table_traverse(doc->syms, __output_find_externs, &dump_externs);
@@ -149,7 +168,41 @@ unsigned int default_output_dump(output_context *oc)
 	/* Print the header line with the word count. */
 	fprintf(object_file, "%o %o\n", i_words, d_words);
 
-	/* TODO: dump more data from the scratch spaces. */
+	scratch_rewind(is);
+
+	/* Print out instructions. */
+	for (; i_words > 0; --i_words)
+	{
+		unsigned int data;
+		unsigned int type;
+
+		unsigned int offset = scratch_get_global_offset(is, scratch_get_next_offset(is));
+		scratch_read_next_data(is, &data, &type);
+
+		/* Data is a negative number, extend the sign to the highest bit for printing. */
+		if (type == ABSOLUTE && ((data & HIGHEST_BIT) != 0))
+			data |= EXTENSION_BIT;
+
+		fprintf(object_file, "%o %.7o %c\n", offset, data, __output_type_convert(type));
+	}
+
+	scratch_rewind(ds);
+
+	/* Print out data. */
+	for (; d_words > 0; --d_words)
+	{
+		unsigned int data;
+		unsigned int type;
+
+		unsigned int offset = scratch_get_global_offset(ds, scratch_get_next_offset(ds));
+		scratch_read_next_data(ds, &data, &type);
+
+		/* Data is a negative number, extend the sign to the highest bit for printing. */
+		if ((data & HIGHEST_BIT) != 0)
+			data |= EXTENSION_BIT;
+
+		fprintf(object_file, "%o %.7o\n", offset, data);
+	}
 
 	/* Print externs if needed. */
 	if (dump_externs)
