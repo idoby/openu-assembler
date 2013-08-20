@@ -130,7 +130,7 @@ static int __output_print_externs(table_element *elem, void *arg)
 	return 1;
 }
 
-unsigned char __output_type_convert(unsigned int type)
+static unsigned char __output_type_convert(unsigned int type)
 {
 	switch (type)
 	{
@@ -145,19 +145,72 @@ unsigned char __output_type_convert(unsigned int type)
 	}
 }
 
+typedef void (*printer_func)(FILE*, unsigned int, unsigned int, unsigned int);
+
+static void __output_dump_space(FILE *object_file, scratch_space *s, printer_func print)
+{
+	unsigned int data, type, offset;
+	unsigned int words = scratch_get_next_offset(s);
+
+	scratch_rewind(s);
+
+	for (; words > 0; --words)
+	{
+		offset = scratch_get_global_offset(s, scratch_get_next_offset(s));
+		scratch_read_next_data(s, &data, &type);
+
+		print(object_file, offset, data, type);
+	}
+}
+
+static void __output_dump_instruction(FILE* f, unsigned int offset, unsigned int data, unsigned int type)
+{
+	/* Data is a negative number, extend the sign to the highest bit for printing. */
+	if (type == ABSOLUTE && ((data & HIGHEST_BIT) != 0))
+		data |= EXTENSION_BIT;
+
+	fprintf(f, "%o %.7o %c\n", offset, data, __output_type_convert(type));
+}
+
+static void __output_dump_data(FILE* f, unsigned int offset, unsigned int data, unsigned int type)
+{
+	/* Data is a negative number, extend the sign to the highest bit for printing. */
+	if ((data & HIGHEST_BIT) != 0)
+		data |= EXTENSION_BIT;
+
+	fprintf(f, "%o %.7o\n", offset, data);
+
+	UNUSED_PARAM(type);
+}
+
+
+static void __output_print_object_file(default_output_context *doc, FILE *object_file)
+{
+	scratch_space *is = doc->i_scratch, *ds = doc->d_scratch;
+	unsigned int i_words, d_words;
+
+	i_words = scratch_get_next_offset(is);
+	d_words = scratch_get_next_offset(ds);
+
+	/* Print the header line with the word count. */
+	fprintf(object_file, "%o %o\n", i_words, d_words);
+
+	/* Print out instructions. */
+	__output_dump_space(object_file, is, __output_dump_instruction);
+
+	/* Print out data. */
+	__output_dump_space(object_file, ds, __output_dump_data);
+}
+
 unsigned int default_output_dump(output_context *oc)
 {
 	default_output_context *doc = oc;
-	scratch_space *is = doc->i_scratch, *ds = doc->d_scratch;
 	unsigned int success = 1;
-	unsigned int i_words, d_words, dump_externs = 0, dump_entries = 0;
+	unsigned int dump_externs = 0, dump_entries = 0;
 	FILE *object_file = NULL, *extern_file = NULL, *entry_file = NULL;
 
 	if (doc == NULL)
 		return 0;
-
-	i_words = scratch_get_next_offset(is);
-	d_words = scratch_get_next_offset(ds);
 
 	/* Check if there are any externs and entries that we need to output. */
 	table_traverse(doc->syms, __output_find_externs, &dump_externs);
@@ -165,44 +218,7 @@ unsigned int default_output_dump(output_context *oc)
 
 	try_open_file(object);
 
-	/* Print the header line with the word count. */
-	fprintf(object_file, "%o %o\n", i_words, d_words);
-
-	scratch_rewind(is);
-
-	/* Print out instructions. */
-	for (; i_words > 0; --i_words)
-	{
-		unsigned int data;
-		unsigned int type;
-
-		unsigned int offset = scratch_get_global_offset(is, scratch_get_next_offset(is));
-		scratch_read_next_data(is, &data, &type);
-
-		/* Data is a negative number, extend the sign to the highest bit for printing. */
-		if (type == ABSOLUTE && ((data & HIGHEST_BIT) != 0))
-			data |= EXTENSION_BIT;
-
-		fprintf(object_file, "%o %.7o %c\n", offset, data, __output_type_convert(type));
-	}
-
-	scratch_rewind(ds);
-
-	/* Print out data. */
-	for (; d_words > 0; --d_words)
-	{
-		unsigned int data;
-		unsigned int type;
-
-		unsigned int offset = scratch_get_global_offset(ds, scratch_get_next_offset(ds));
-		scratch_read_next_data(ds, &data, &type);
-
-		/* Data is a negative number, extend the sign to the highest bit for printing. */
-		if ((data & HIGHEST_BIT) != 0)
-			data |= EXTENSION_BIT;
-
-		fprintf(object_file, "%o %.7o\n", offset, data);
-	}
+	__output_print_object_file(doc, object_file);
 
 	/* Print externs if needed. */
 	if (dump_externs)
@@ -239,5 +255,4 @@ void default_output_destroy(output_context *oc)
 		return;
 
 	free(doc);
-
 }
