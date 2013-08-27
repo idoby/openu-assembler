@@ -7,47 +7,49 @@
 #include "default_output.h"
 
 typedef struct default_output_context {
-	char	object_file_name[MAX_FILE_NAME];
-	char	extern_file_name[MAX_FILE_NAME];
-	char	entry_file_name[MAX_FILE_NAME];
+	char object_file_name[MAX_FILE_NAME];
+	char extern_file_name[MAX_FILE_NAME];
+	char entry_file_name[MAX_FILE_NAME];
 	
-	scratch_space 	*i_scratch;
-	scratch_space 	*d_scratch;
+	scratch_space *i_scratch;
+	scratch_space *d_scratch;
 
-	symbol_table 	*syms;
+	symbol_table  *syms;
 
-	list 			*errors;
+	list          *errors;
 } default_output_context;
 
-output_ops default_output_ops = {	default_output_init,
-									default_output_dump,
-									default_output_destroy};
+output_ops default_output_ops = {default_output_init,
+	                         default_output_dump,
+	                         default_output_destroy};
 
-#define HIGHEST_BIT		(1 << 19)
-#define EXTENSION_BIT	(1 << 20)
+#define HIGHEST_BIT   (1 << 19)
+#define EXTENSION_BIT (1 << 20)
 
 static const char object_file_extension[] = ".ob";
-static const size_t object_file_ext_len = sizeof(object_file_extension) - 1;
+static const size_t object_file_ext_len   = sizeof(object_file_extension) - 1;
 
 static const char extern_file_extension[] = ".ext";
-static const size_t extern_file_ext_len = sizeof(extern_file_extension) - 1;
+static const size_t extern_file_ext_len   = sizeof(extern_file_extension) - 1;
 
 static const char entry_file_extension[] = ".ent";
-static const size_t entry_file_ext_len = sizeof(extern_file_extension) - 1;
+static const size_t entry_file_ext_len   = sizeof(extern_file_extension) - 1;
 
-#define try_open_file(which)	\
-	do {	\
-			if ((which ## _file = fopen(doc->which ## _file_name, "w")) == NULL) {	\
-				/* File opening failed, abort. */	\
-				error *err = error_make(ERROR_NO_LINE, "Unable to open file %s", doc->which ## _file_name);	\
-				list_insert_before(doc->errors, &err->errors);	\
-				success = 0;	\
-				goto output_dump_exit;	\
-			}	\
-		} while(0)
+#define try_open_file(which) \
+	do { \
+		if ((which ## _file = fopen(doc->which ## _file_name, "w")) == NULL) { \
+			/* File opening failed, abort. */ \
+			error *err = error_make(ERROR_NO_LINE, "Unable to open file %s", doc->which ## _file_name); \
+			list_insert_before(doc->errors, &err->errors); \
+			success = 0; \
+			goto output_dump_exit; \
+		}	\
+	} while(0)
 
 output_context*	default_output_init
-				(char* file_name, symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors)
+	       (char* file_name, symbol_table *syms,
+	       	scratch_space *i_scratch, scratch_space *d_scratch,
+	       	list *errors)
 {
 	default_output_context *doc;
 
@@ -59,8 +61,8 @@ output_context*	default_output_init
 
 	doc->i_scratch = i_scratch;
 	doc->d_scratch = d_scratch;
-	doc->syms = syms;
-	doc->errors = errors;
+	doc->syms      = syms;
+	doc->errors    = errors;
 
 	/* Create the filenames of the files we'll be outputting to. */
 	strncpy(doc->object_file_name, file_name, MAX_FILE_NAME);
@@ -94,8 +96,10 @@ static int __output_print_entries(table_element *elem, void *arg)
 	symbol *sym = table_entry(elem);
 	scratch_space *s = sym->address_space;
 
+	unsigned int g_offset = scratch_get_global_offset(s, sym->address_offset);
+
 	if (table_is_entry(sym))
-		fprintf(f, "%s %o\n", sym->name, scratch_get_global_offset(s, sym->address_offset));
+		fprintf(f, "%s %o\n", sym->name, g_offset);
 
 	return 1;
 }
@@ -165,7 +169,8 @@ static void __output_dump_space(FILE *object_file, scratch_space *s, printer_fun
 
 static void __output_dump_instruction(FILE* f, unsigned int offset, unsigned int data, unsigned int type)
 {
-	/* Data is a negative number, extend the sign to the highest bit for printing. */
+	/* Data is a negative number,
+	   extend the sign to the highest bit for printing. */
 	if (type == ABSOLUTE && ((data & HIGHEST_BIT) != 0))
 		data |= EXTENSION_BIT;
 
@@ -174,7 +179,8 @@ static void __output_dump_instruction(FILE* f, unsigned int offset, unsigned int
 
 static void __output_dump_data(FILE* f, unsigned int offset, unsigned int data, unsigned int type)
 {
-	/* Data is a negative number, extend the sign to the highest bit for printing. */
+	/* Data is a negative number,
+	   extend the sign to the highest bit for printing. */
 	if ((data & HIGHEST_BIT) != 0)
 		data |= EXTENSION_BIT;
 

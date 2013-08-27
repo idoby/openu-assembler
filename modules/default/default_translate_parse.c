@@ -17,13 +17,14 @@ static parse_symbol_error __parse_assign_symbol(scratch_space *s, symbol_table *
 	if (old_sym != NULL)
 	{
 		if (!table_is_defined(old_sym))
-			new_sym = old_sym; /* This refers to an old undefined symbol, so we'll define it. */
+			/* This refers to an old undefined symbol, so we'll define it. */
+			new_sym = old_sym;
 		else
 			return LABEL_EXISTS;
 	}
 
-	/*	Do we already have a symbol to work on?
-		If not, define a new one. */
+	/* Do we already have a symbol to work on?
+	   If not, define a new one. */
 	if (new_sym == NULL)
 		new_sym = table_new_symbol(syms, label);
 
@@ -87,9 +88,7 @@ static parse_symbol_error __parse_label(const char *p, char out_sym[SYMBOL_MAX_L
 
 	/* Do we have a label? */
 	if (*p2 == LABEL_INDICATOR)
-	{
 	 	return LABEL_EXISTS;
-	}
 
 	return LABEL_NO_LABEL;
 }
@@ -175,9 +174,9 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 		/* Copy out label name. */
 		__parse_label(p, label);
 
-		/* 	Define the label, or quit if unsuccessful.
-		 	The label should be defined only if it's external.
-		 	Entry labels still require a definition in the file. */
+		/* Define the label, or quit if unsuccessful.
+		   The label should be defined only if it's external.
+		   Entry labels still require a definition in the file. */
 		switch (__parse_assign_symbol(NULL, dtc->syms, label, type, type == EXTERN))
 		{
 			case LABEL_ALLOC_ERROR:
@@ -206,8 +205,8 @@ static const char* __parse_label_list(default_translate_context *dtc, const char
 	}
 }
 
-/*	The following functions are the meat of this project.
-	It is not surprising, therefore, that they were written as late as possible. */
+/* The following functions are the meat of this project.
+   It is not surprising, therefore, that they were written as late as possible. */
 static const char* __parse_directive(default_translate_context *dtc, const char *p, const char *label)
 {
 	if (is_directive(p, DIRECTIVE_DATA))
@@ -250,7 +249,8 @@ static const char* __parse_modifiers(const char *p, default_instruction *inst)
 	/* Skip the /. */
 	p = __skip_whitespace(p + 1);
 
-	if (*p == INST_MOD_TYPE_TRUE)	/* type=1, so we need to find a /# sequence for each operand */
+	/* type=1, so we need to find a /# sequence for each operand */
+	if (*p == INST_MOD_TYPE_TRUE)
 	{
 		unsigned int operand = 0;
 
@@ -338,8 +338,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 		default_address_set_symbol(ad, first_sym);
 
-		/*	Mark this instruction as a reference to the symbol
-			and write some zeroes to reserve space for this symbol. */
+		/* Mark this instruction as a reference to the symbol
+		   and write some zeroes to reserve space for this symbol. */
 		first_label_off = scratch_get_global_offset(is, scratch_get_next_offset(is));
 		table_add_reference(first_sym, first_label_off);
 		scratch_write_next_data(is, 0, ABSOLUTE);
@@ -376,8 +376,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 				unsigned int sec_label_off = 0;
 				symbol *sec_sym = NULL;
 
-				/*	Otherwise this must be a label.
-					Skip the *. */
+				/* Otherwise this must be a label.
+				   Skip the *. */
 				p = __skip_whitespace(p + 1);
 
 				__parse_label(p, sec_label);
@@ -395,8 +395,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 				default_address_set_index_symbol(ad, sec_sym);
 
-				/*	Mark this instruction as a reference to the symbol
-				and write some zeroes to reserve space for this symbol. */
+				/* Mark this instruction as a reference to the symbol
+				   and write some zeroes to reserve space for this symbol. */
 				sec_label_off = scratch_get_global_offset(is, scratch_get_next_offset(is));
 				table_add_reference(sec_sym, sec_label_off);
 				scratch_write_next_data(is, 0, ABSOLUTE);
@@ -414,8 +414,8 @@ static const char* __parse_operands(default_translate_context *dtc, const char *
 
 	for (; operand < inst->proto->num_operands; ++operand)
 	{
-		/*	Verify one operand, according to the allowed types in proto,
-			surrounded by whitespace. */
+		/* Verify one operand, according to the allowed types in proto,
+		   surrounded by whitespace. */
 		p = __skip_whitespace(p);
 		p = __skip_whitespace(__parse_operand(dtc, p, &inst->operands[operand]));
 
@@ -474,8 +474,8 @@ parse_exit:
 	return NULL;
 }
 
-/*	Breaks down the line into a more abstract representation, assuming that the syntax
-	is valid. */
+/* Breaks down the line into a more abstract representation, assuming that the syntax
+   is valid. */
 static translate_line_error __parse_line(default_translate_context *dtc, const char *p)
 {
 #define LABEL_IF_EXISTS (line_label_exists == LABEL_EXISTS ? line_label : NULL)

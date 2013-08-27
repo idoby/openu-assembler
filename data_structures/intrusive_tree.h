@@ -23,6 +23,6 @@ void tree_init(tree *root);
 void tree_node_init(tree_node* node);
 void tree_insert(tree *root, tree_node *new, compare_func cmp);
 tree_node* tree_search(tree *root, tree_node *find, compare_func cmp);
-int	 tree_traverse(tree *root, visit_func visit, void *arg);
+int tree_traverse(tree *root, visit_func visit, void *arg);
 
 #endif

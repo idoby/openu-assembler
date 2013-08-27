@@ -1,11 +1,11 @@
 SOURCES         = as.c assembler.c
-SOURCE_DIRS		= data_structures modules/default
+SOURCE_DIRS     = data_structures modules/default
 EXTRA_DEPS      = TODO.txt $(wildcard *.h modules/*.h)
-TARGET			= as
+TARGET          = as
 
 ifeq ($(WITH_TESTS), y)
-        FLAGS += -DRUN_TESTS
-        SOURCE_DIRS += tests
+		FLAGS += -DRUN_TESTS
+		SOURCE_DIRS += tests
 endif
 
 .PHONY: todo TODO.txt

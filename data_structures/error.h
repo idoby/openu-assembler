@@ -3,14 +3,13 @@
 
 #include "intrusive_list.h"
 
-#define ERROR_TEXT_MAX	512
-#define ERROR_NO_LINE	0
+#define ERROR_TEXT_MAX 512
+#define ERROR_NO_LINE  0
 
-typedef struct error
-{
-	char text[ERROR_TEXT_MAX];	/* The error text to be printed. */
-	unsigned int line;			/* The line number in the input file. */
-	list errors;				/* The rest of the error list. */
+typedef struct error {
+	char text[ERROR_TEXT_MAX]; /* The error text to be printed. */
+	unsigned int line;         /* The line number in the input file. */
+	list errors;               /* The rest of the error list. */
 } error;
 
 error* error_make(unsigned int line, char *format, ...);

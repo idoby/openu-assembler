@@ -1,5 +1,5 @@
-/*	ALL functions must be static.
-	Functions beginning with __TEST_ are actual test functions. */
+/* ALL functions must be static.
+   Functions beginning with __TEST_ are actual test functions. */
 #include <stdlib.h>
 #include <stdio.h>
 #include <utils.h>
@@ -52,10 +52,10 @@ static int __default_translate_test_line(const char *line, int should_pass, cons
 
 static int __TEST_default_translate(void)
 {
-#define test_assert_parsed(line)	\
+#define test_assert_parsed(line) \
 	do { if (__default_translate_test_line((line), 1, "Line NOT parsed successfully: " S__LINE__)) return TEST_FAILURE; } while(0)
 
-#define test_assert_not_parsed(line)	\
+#define test_assert_not_parsed(line) \
 	do { if (__default_translate_test_line((line), 0, "Line parsed successfully: " S__LINE__)) return TEST_FAILURE; } while(0)
 
 	/* Comment tests. */
@@ -146,9 +146,9 @@ static void __print_inst(default_instruction *inst)
 	if (inst == NULL)
 		return;
 
-	printf("instruction name: %s\n", 	inst->proto->name);
-	printf("instruction opcode: %d\n", 	inst->proto->opcode);
-	printf("instruction operands: %d\n",inst->proto->num_operands);
+	printf("instruction name: %s\n", inst->proto->name);
+	printf("instruction opcode: %d\n", inst->proto->opcode);
+	printf("instruction operands: %d\n", inst->proto->num_operands);
 	printf("instruction src allowed: %d\n", inst->proto->allowed_modes[1]);
 	printf("instruction dst allowed: %d\n", inst->proto->allowed_modes[0]);
 }
@@ -163,7 +163,8 @@ static int __TEST_default_instruction_make(void)
 	/* Get one that doesn't. */
 	inst2 = default_instruction_make("moo");
 
-	test_assert(inst1 != NULL && strcmp(inst1->proto->name, "clr") == 0, "clr instruction not found!");
+	test_assert(inst1 != NULL && strcmp(inst1->proto->name, "clr") == 0,
+		    "clr instruction not found!");
 	test_assert(inst2 == NULL, "moo instruction exists?");
 
 	__print_inst(inst1);
@@ -204,8 +205,10 @@ static int __TEST_symbol_table(void)
 	table_new_symbol(&assem.sym_table, "ZZZZZZZZZZZ");
 	table_new_symbol(&assem.sym_table, "A symbol with more than 30 characters should get truncated");
 
-	test_assert(table_find_symbol(&assem.sym_table, "MOO") != NULL, "symbol 'MOO' not found.");
-	test_assert(table_find_symbol(&assem.sym_table, "SHIT") == NULL, "non-existent symbol 'SHIT' found?");
+	test_assert(table_find_symbol(&assem.sym_table, "MOO") != NULL,
+		                      "symbol 'MOO' not found.");
+	test_assert(table_find_symbol(&assem.sym_table, "DERP") == NULL,
+		                      "non-existent symbol 'DERP' found?");
 
 	table_traverse(&assem.sym_table, __print_symbols, NULL);
 
@@ -309,11 +312,11 @@ static int __TEST_error(void)
 
 /*	The list of tests to be run.
 	Add new tests here. */
-#define TEST_LIST(list_entry)		\
-	list_entry(default_input)		\
-	list_entry(default_translate)	\
-	list_entry(default_instruction_make)	\
-	list_entry(symbol_table)		\
-	list_entry(error)				\
-	list_entry(list_test)			\
+#define TEST_LIST(list_entry) \
+	list_entry(default_input) \
+	list_entry(default_translate) \
+	list_entry(default_instruction_make) \
+	list_entry(symbol_table) \
+	list_entry(error) \
+	list_entry(list_test) \
 	list_entry(list_test_empty)

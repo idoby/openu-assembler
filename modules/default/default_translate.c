@@ -11,62 +11,66 @@
 #include <utils.h>
 
 typedef struct default_translate_context {
-	unsigned int 	line_number;
-	unsigned int 	program_valid;
-	list 			insts;
-	symbol_table 	*syms;
-	scratch_space 	*i_scratch;
-	scratch_space 	*d_scratch;
-	list			*errors;
+	unsigned int    line_number;
+	unsigned int    program_valid;
+	list            insts;
+	symbol_table    *syms;
+	scratch_space   *i_scratch;
+	scratch_space   *d_scratch;
+	list            *errors;
 } default_translate_context;
 
 translate_ops default_translate_ops = 
-				{	default_translate_init,
-					default_translate_destroy,
-					default_translate_line,
-					default_is_program_valid,
-					default_translate_finalize };
+             {default_translate_init,
+              default_translate_destroy,
+              default_translate_line,
+              default_is_program_valid,
+              default_translate_finalize};
 
 #define INSTRUCTION_SPACE_BEGIN	100
 
-static const int  NUM_REGISTERS			= 8;
-static const int  REGISTER_NAME_WIDTH	= 2;
-static const char REGISTER_PREFIX		= 'r';
-static const char REGISTER_FIRST_NUMBER	= '0';
-static const char LINE_END				= '\n';
-static const char COMMENT_START 		= ';';
-static const char LABEL_INDICATOR		= ':';
-static const char DIRECTIVE_START		= '.';
-static const char SEPARATOR				= ',';
-static const char IMMEDIATE_INDICATOR	= '#';
-static const char INDEX_START			= '{';
-static const char INDEX_END				= '}';
-static const char INDEX_LABEL_INDICATOR	= '*';
+static const int  NUM_REGISTERS         = 8;
+static const int  REGISTER_NAME_WIDTH   = 2;
+static const char REGISTER_PREFIX       = 'r';
+static const char REGISTER_FIRST_NUMBER = '0';
+static const char LINE_END              = '\n';
+static const char COMMENT_START         = ';';
+static const char LABEL_INDICATOR       = ':';
+static const char DIRECTIVE_START       = '.';
+static const char SEPARATOR             = ',';
+static const char IMMEDIATE_INDICATOR   = '#';
+static const char INDEX_START           = '{';
+static const char INDEX_END             = '}';
+static const char INDEX_LABEL_INDICATOR = '*';
 
-static const char POSITIVE_INDICATOR	= '+';
-static const char NEGATIVE_INDICATOR	= '-';
+static const char POSITIVE_INDICATOR    = '+';
+static const char NEGATIVE_INDICATOR    = '-';
 
-static const char STRING_DELIMITER		= '"';
-static const char INST_MOD_DELIMITER	= '/';
+static const char STRING_DELIMITER      = '"';
+static const char INST_MOD_DELIMITER    = '/';
 
-static const char INST_MOD_DBL_TRUE		= '1';
-static const char INST_MOD_DBL_FALSE	= '0';
+static const char INST_MOD_DBL_TRUE     = '1';
+static const char INST_MOD_DBL_FALSE    = '0';
 
-static const char INST_MOD_TYPE_TRUE	= '1';
-static const char INST_MOD_TYPE_FALSE	= '0';
-static const char INST_MOD_RIGHT_BITS	= '1';
-static const char INST_MOD_LEFT_BITS	= '0';
+static const char INST_MOD_TYPE_TRUE    = '1';
+static const char INST_MOD_TYPE_FALSE   = '0';
+static const char INST_MOD_RIGHT_BITS   = '1';
+static const char INST_MOD_LEFT_BITS    = '0';
 
-static const char DIRECTIVE_DATA[]		= "data";
-static const char DIRECTIVE_STRING[]	= "string";
-static const char DIRECTIVE_ENTRY[]		= "entry";
-static const char DIRECTIVE_EXTERN[]	= "extern";
+static const char DIRECTIVE_DATA[]      = "data";
+static const char DIRECTIVE_STRING[]    = "string";
+static const char DIRECTIVE_ENTRY[]     = "entry";
+static const char DIRECTIVE_EXTERN[]    = "extern";
 
 #define is_directive(p,d) (strncmp((p), (d), strlen((d))) == 0)
-#define is_valid_register(p) ((p)[0] == REGISTER_PREFIX && (p)[1] >= REGISTER_FIRST_NUMBER && (p)[1] <= REGISTER_FIRST_NUMBER + NUM_REGISTERS - 1)
+#define is_valid_register(p) ((p)[0] == REGISTER_PREFIX && \
+                              (p)[1] >= REGISTER_FIRST_NUMBER && \
+                              (p)[1] <= REGISTER_FIRST_NUMBER + NUM_REGISTERS - 1)
 
-translate_context*	default_translate_init
-					(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors)
+translate_context* default_translate_init
+                   (symbol_table *syms,
+                    scratch_space *i_scratch, scratch_space *d_scratch,
+                    list *errors)
 {
 	default_translate_context *dtc;
 
@@ -76,15 +80,15 @@ translate_context*	default_translate_init
 	if ((dtc = malloc(sizeof(*dtc))) == NULL)
 		return NULL;
 	
-	dtc->line_number 	= 0;
-	dtc->program_valid	= 1;
-	dtc->syms			= syms;
+	dtc->line_number   = 0;
+	dtc->program_valid = 1;
+	dtc->syms          = syms;
 
 	dtc->i_scratch = i_scratch;
 	scratch_set_global_offset(i_scratch, INSTRUCTION_SPACE_BEGIN);
 
 	dtc->d_scratch = d_scratch;
-	dtc->errors = errors;
+	dtc->errors    = errors;
 
 	list_init(&dtc->insts);
 

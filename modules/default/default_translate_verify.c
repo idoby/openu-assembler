@@ -154,7 +154,8 @@ static const char* __verify_modifiers(const char *p)
 
 	p = __skip_whitespace(p);
 
-	if (*p == INST_MOD_TYPE_TRUE)	/* type=1, so we need to find a /# sequence for each operand */
+	/* type=1, so we need to find a /# sequence for each operand */
+	if (*p == INST_MOD_TYPE_TRUE)
 	{
 		unsigned int operand = 0;
 
@@ -167,7 +168,8 @@ static const char* __verify_modifiers(const char *p)
 				return NULL;
 			p = __skip_whitespace(p);
 
-			if (*p != INST_MOD_LEFT_BITS && *p != INST_MOD_RIGHT_BITS) /* Must be a 0 or a 1 here. */
+			/* Must be a 0 or a 1 here. */
+			if (*p != INST_MOD_LEFT_BITS && *p != INST_MOD_RIGHT_BITS)
 				return NULL;
 
 			++p;
@@ -210,15 +212,18 @@ static const char* __verify_operand(const char* p, unsigned int allowed)
 
 			p = __skip_whitespace(p + 1);
 
-			if (*p == INDEX_LABEL_INDICATOR) /* An index with a label offset. */
+			/* An index with a label offset. */
+			if (*p == INDEX_LABEL_INDICATOR)
 			{
 				p = __skip_whitespace(p + 1);
 				if ((p = __verify_label(p)) == NULL)
 					return NULL;
 			}
-			else if (__verify_register(p) != NULL) /* An index with a register offset. */
+			/* An index with a register offset. */
+			else if (__verify_register(p) != NULL)
 				p = __verify_register(p);
-			else if ((p = __verify_number(p)) == NULL) /* Otherwise this leaves a number. */
+			/* Otherwise this leaves a number. */
+			else if ((p = __verify_number(p)) == NULL)
 				return NULL;
 
 			p = __skip_whitespace(p);
@@ -243,8 +248,8 @@ static const char* __verify_operands(const char *p, default_ins_prototype *proto
 
 	for (; operand < proto->num_operands; ++operand)
 	{
-		/*	Verify one operand, according to the allowed types in proto,
-			surrounded by whitespace. */
+		/* Verify one operand, according to the allowed types in proto,
+		   surrounded by whitespace. */
 		p = __skip_whitespace(__verify_operand(__skip_whitespace(p), proto->allowed_modes[operand]));
 
 		if (p == NULL)
@@ -282,18 +287,18 @@ static const char* __verify_instruction(const char *p)
 	if (p == NULL)
 		return NULL;
 
-	/*	The hardest part of the verification.
-		The last bastion of unverified syntax lies beyond p.
-		Let us go boldly now where no pointer has gone before.
-		Some of us may not return, but it must be done. */
+	/* The hardest part of the verification.
+	   The last bastion of unverified syntax lies beyond p.
+	   Let us go boldly now where no pointer has gone before.
+	   Some of us may not return, but it must be done. */
 	return __verify_operands(p, inst);
 }
 
 #define __verify_return_error() \
-	do {	\
-		list_insert_before(dtc->errors, &err->errors);	\
-		return TRANSLATE_LINE_SYNTAX_ERROR;	\
-		} while(0)
+	do { \
+		list_insert_before(dtc->errors, &err->errors); \
+		return TRANSLATE_LINE_SYNTAX_ERROR; \
+	} while(0)
 
 static translate_line_error __verify_line(default_translate_context *dtc, const char *p)
 {
@@ -332,7 +337,8 @@ static translate_line_error __verify_line(default_translate_context *dtc, const 
 		if (*p != LABEL_INDICATOR)
 		{
 			error *err = error_make(dtc->line_number,
-									"Expected '%c' at the end of the label, got '%c'", LABEL_INDICATOR, *p);
+			                        "Expected '%c' at the end of the label, got '%c'",
+			                        LABEL_INDICATOR, *p);
 			__verify_return_error();
 		}
 
@@ -347,7 +353,7 @@ static translate_line_error __verify_line(default_translate_context *dtc, const 
 	{
 		++p;
 
-		/*	This function verifies rest of the line as a directive. */
+		/* This function verifies rest of the line as a directive. */
 		if ((p = __verify_directive(p)) == NULL)
 		{
 			/* TODO: Maybe make error more detailed. */

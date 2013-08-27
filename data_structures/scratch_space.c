@@ -11,7 +11,7 @@ void scratch_init(scratch_space *s)
 	/* Zero all the data. */
 	memset(s->cells, 0, sizeof(s->cells));
 
-	s->offset_next = 0;
+	s->offset_next   = 0;
 	s->offset_global = 0;
 }
 

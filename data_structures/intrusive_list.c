@@ -6,7 +6,8 @@ void list_init(list *head)
 	if (head == NULL)
 		return;
 
-	head->next = head->prev = head;
+	head->next = head;
+	head->prev = head;
 }
 
 void list_insert_after(list *head, list *new)
@@ -15,9 +16,9 @@ void list_insert_after(list *head, list *new)
 		return;
 
 	head->next->prev = new;
-	new->prev = head;
-	new->next = head->next;
-	head->next = new;
+	new->prev        = head;
+	new->next        = head->next;
+	head->next       = new;
 }
 
 void list_insert_before(list *head, list *new)

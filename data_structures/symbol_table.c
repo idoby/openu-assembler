@@ -17,11 +17,7 @@ static int __delete_element(table_element *element, void *arg)
 	symbol *sym = table_entry(element);
 
 	/* Delete references, if any exist. */
-	list_for_each_entry_safe(	&sym->references,
-								ref,
-								safe,
-								struct reference,
-								refs)
+	list_for_each_entry_safe(&sym->references, ref, safe, struct reference, refs)
 	{
 		list_remove(&ref->refs);
 		free(ref);
@@ -67,10 +63,10 @@ symbol* table_new_symbol(symbol_table* table, const char* name)
 		return NULL;
 
 	/* Initialize the new symbol object. */
-	sym->type			= INTERN;
-	sym->defined		= 0;
-	sym->address_space	= NULL;
-	sym->address_offset	= 0;
+	sym->type           = INTERN;
+	sym->defined        = 0;
+	sym->address_space  = NULL;
+	sym->address_offset = 0;
 	strncpy(sym->name, name, SYMBOL_MAX_LENGTH + 1);
 	sym->name[SYMBOL_MAX_LENGTH] = '\0';
 	list_init(&sym->references);
@@ -85,8 +81,9 @@ symbol* table_new_symbol(symbol_table* table, const char* name)
 symbol*	table_find_symbol(symbol_table* table, const char* name)
 {
 	tree_node *res;
-	/*	Create a new temporary symbol to be able to search for it using the tree function.
-		No need to initialize properly because we only care about the name for the comparison. */
+	/* Create a new temporary symbol to be able to search for it
+	   using the tree function. No need to initialize properly
+	   because we only care about the name for the comparison. */
 	symbol sym;
 	strncpy(sym.name, name, SYMBOL_MAX_LENGTH + 1); /* Copy the name to the temp symbol. */
 	sym.name[SYMBOL_MAX_LENGTH] = '\0';
@@ -149,8 +146,8 @@ void table_set_address_space(symbol *sym, struct scratch_space *s, unsigned int 
 	if (sym == NULL || s == NULL)
 		return;
 
-	sym->address_space	= s;
-	sym->address_offset	= offset;
+	sym->address_space  = s;
+	sym->address_offset = offset;
 }
 
 void table_set_type(symbol *sym, symbol_type type)

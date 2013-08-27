@@ -23,17 +23,18 @@ typedef enum translate_error {
 } translate_error;
 
 typedef struct translate_ops {
-						/* Module constructor. */
-	translate_context*	(*init)
-						(symbol_table *syms, scratch_space *i_scratch, scratch_space *d_scratch, list *errors);
-						/* Module destructor. */
-	void				(*destroy)(translate_context *tc);
-						/* Translate a single line. */
-	translate_line_error(*translate_line)(translate_context *tc, const char *line);
-						/* Is the program valid? Should we print errors or finalize? */
-	unsigned int		(*is_program_valid)(translate_context* tc);
-						/* Finalize translation. At this point the data structures are ready for output. */
-	translate_error		(*finalize)(translate_context *tc);
+	/* Module constructor. */
+	translate_context*      (*init)
+	                        (symbol_table *syms, scratch_space *i_scratch,
+	                        scratch_space *d_scratch, list *errors);
+	/* Module destructor. */
+	void                    (*destroy) (translate_context *tc);
+	/* Translate a single line. */
+	translate_line_error    (*translate_line) (translate_context *tc, const char *line);
+	/* Is the program valid? Should we print errors or finalize? */
+	unsigned int            (*is_program_valid) (translate_context* tc);
+	/* Finalize translation. At this point the data structures are ready for output. */
+	translate_error	        (*finalize) (translate_context *tc);
 } translate_ops;
 
 #endif

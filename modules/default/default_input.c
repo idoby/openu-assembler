@@ -9,20 +9,20 @@
 #define MAX_BUF 1024
 
 typedef struct default_input_context {
-	char			file_name[MAX_FILE_NAME];
-	FILE*			f;
-	char			line[MAX_BUF];
-	unsigned int 	line_number;
-	list*			errors;
+	char            file_name[MAX_FILE_NAME];
+	FILE*           f;
+	char            line[MAX_BUF];
+	unsigned int    line_number;
+	list*           errors;
 } default_input_context;
 
 input_ops default_input_ops =
-		{	default_input_init,
-			default_input_get_real_file_name,
-			default_input_get_line,
-			default_input_get_line_number,
-			default_input_destroy_line,
-			default_input_destroy};
+		{default_input_init,
+		 default_input_get_real_file_name,
+		 default_input_get_line,
+		 default_input_get_line_number,
+		 default_input_destroy_line,
+		 default_input_destroy};
 
 static const char default_file_extension[] = ".as";
 static const size_t default_file_ext_len = sizeof(default_file_extension) - 1;

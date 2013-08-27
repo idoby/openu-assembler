@@ -14,8 +14,8 @@ void tree_node_init(tree_node* node)
 	if (node == NULL)
 		return;
 
-	node->left	= NULL;
-	node->right	= NULL;
+	node->left  = NULL;
+	node->right = NULL;
 }
 
 static void __tree_insert(tree_node *node, tree_node *new, compare_func cmp)
@@ -28,17 +28,21 @@ static void __tree_insert(tree_node *node, tree_node *new, compare_func cmp)
 
 	/* If the current node is bigger than the new one and there's a left subtree, go left. */
 	if (rel == 1) {
-		if (node->left != NULL)
+		if (node->left != NULL) {
 			__tree_insert(node->left, new, cmp);
-		else {
-			node->left = new;		/* Found the right spot, insert new node here, coolness. */
+		} else {
+			/* Found the right spot, insert new node here, coolness. */
+			node->left = new;
 			return;
 		}
 	}
-	else if (rel == -1 && node->right != NULL)	/* Otherwise we go right and do something similar. */
+	else if (rel == -1 && node->right != NULL) {
+		/* Otherwise we go right and do something similar. */
 		__tree_insert(node->right, new, cmp);
-	else							/* Finally, if we need to go right but there's no subtree there. */
+	} else {
+		/* Finally, if we need to go right but there's no subtree there. */
 		node->right = new;
+	}
 }
 
 void tree_insert(tree *root, tree_node *new, compare_func cmp)
@@ -61,8 +65,9 @@ static tree_node* __tree_search(tree_node *node, tree_node *find, compare_func c
 	int rel = cmp(node, find);
 
 	/* If the nodes are equal, we found the droids we we're looking for. */
-	if (rel == 0)
+	if (rel == 0) {
 		return node;
+	}
 	/* If the current node is bigger than the one we're looking for, go left. */
 	else if (rel == 1) {
 		if (node->left != NULL)

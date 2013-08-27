@@ -1,8 +1,8 @@
 # Some globals
-export CC 			= gcc
-export FLAGS		?= -g -O3 -ansi -pedantic -Wall -Wextra -I$(abspath .)
+export CC                 = gcc
+export FLAGS             ?= -g -O3 -ansi -pedantic -Wall -Wextra -I$(abspath .)
 export BUILD_SYSTEM_PATH ?= $(abspath makefile)
-export WITH_TESTS	?= n
+export WITH_TESTS        ?= y
 
 include defs.make
 
@@ -25,14 +25,14 @@ ifneq ($(SOURCE_DIRS),)
 $(SOURCE_DIRS):
 	make -j4 -C $@ -f $(BUILD_SYSTEM_PATH) $(notdir $@).o
 
-DIR_OBJECTS =	$(addsuffix .o,				\
-				$(join $(SOURCE_DIRS),		\
-				$(addprefix /,				\
-				$(notdir $(SOURCE_DIRS)))))
+DIR_OBJECTS =	$(addsuffix .o,             \
+                $(join $(SOURCE_DIRS),      \
+                $(addprefix /,              \
+                $(notdir $(SOURCE_DIRS)))))
 OBJECTS += $(DIR_OBJECTS)
 
 # And a clean target
-DIRS_CLEAN 	= $(addsuffix _clean,$(SOURCE_DIRS))
+DIRS_CLEAN = $(addsuffix _clean,$(SOURCE_DIRS))
 
 .PHONY: $(DIRS_CLEAN)
 $(DIRS_CLEAN):

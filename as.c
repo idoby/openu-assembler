@@ -8,7 +8,7 @@
 
 #include <tests/tests.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	/* Run tests if they are enabled and we
 	   don't have any parameters. */
