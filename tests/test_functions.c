@@ -88,8 +88,8 @@ static int __TEST_default_translate(void)
 
 	/* .string tests */
 	test_assert_parsed("    SYM: .string \"hello, stupid world!\"\n");
-	test_assert_parsed("    SYM: .string \"hello, stupid; world!\", \"fuck this shit, dawg\"	 ; AND A COMMENT\n");
-	test_assert_parsed("    SYM: .string \"these	are 	tab 	separated!\", \"mother, 	fucker!\"\n");
+	test_assert_parsed("    SYM: .string \"hello, stupid; world!\", \"yo, dawg\"	 ; AND A COMMENT\n");
+	test_assert_parsed("    SYM: .string \"these	are 	tab 	separated!\", \"word, 	more words!\"\n");
 
 	test_assert_not_parsed("   . string \"hello\"");
 	test_assert_not_parsed("   .string \"hello\" , ");
@@ -97,8 +97,8 @@ static int __TEST_default_translate(void)
 
 	/* .extern tests */
 	test_assert_parsed("       .extern label\n");
-	test_assert_parsed("    SYM: .extern word, s2h3i4t, a5sFRs");
-	test_assert_parsed(" 	 .extern word, s2h3_i4t, a5sFRs\n");
+	test_assert_parsed("    SYM: .extern word, s2re3i4h, a5sFRs");
+	test_assert_parsed(" 	 .extern word, s2gr3_i4c, a5sFRs\n");
 	test_assert_parsed("r9:  .extern r8 ; should not pass because no :\n");
 
 
@@ -113,8 +113,8 @@ static int __TEST_default_translate(void)
 
 	/* .entry tests */
 	test_assert_parsed(".entry some_label\n");
-	test_assert_parsed("    SYM: .entry word, s2h3i---4t, a5sFRs");
-	test_assert_parsed(".entry word, s2h3_i4t, a5sFRs\n");
+	test_assert_parsed("    SYM: .entry word, s2y6i---4t, a5sFRs");
+	test_assert_parsed(".entry word, t5h3_i4hy, a5sFRs\n");
 
 	test_assert_not_parsed(".entry 2nvldlbl\n");
 	test_assert_not_parsed(".entry stop");
