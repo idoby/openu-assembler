@@ -106,15 +106,6 @@ void assembler_destroy(assembler *ass)
 	if (ass == NULL)
 		return;
 
-	ass->input_ops.destroy(ass->ic);
-	ass->ic = NULL;
-	
-	ass->translate_ops.destroy(ass->tc);
-	ass->tc = NULL;
-
-	ass->output_ops.destroy(ass->oc);
-	ass->oc = NULL;
-
 	table_destroy(&ass->sym_table);
 
 	/* Delete errors, if any exist. */
