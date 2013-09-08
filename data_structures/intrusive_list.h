@@ -26,11 +26,16 @@ typedef struct list {
 	     &(current->member) != (head); \
 	     current = safe, safe = container_of(type, safe->member.next, member))
 
+/* Predicate to determine if a list is empty. */
 #define list_empty(head) ((head)->next == (head))
 
+/* Initialize a list object. */
 void list_init(list *head);
+/* Insert new after head. */
 void list_insert_after(list *head, list *new);
+/* Insert new before head. Can be used to add to the start of a list. */
 void list_insert_before(list *head, list *new);
+/* Remove element from list. */
 void list_remove(list *element);
 
 #endif

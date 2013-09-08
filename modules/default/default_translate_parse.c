@@ -32,7 +32,7 @@ static parse_symbol_error __parse_assign_symbol(scratch_space *s, symbol_table *
 		return LABEL_ALLOC_ERROR;
 
 	if (s != NULL)
-		table_set_address_space(new_sym, s, scratch_get_next_offset(s));
+		table_set_address_space(new_sym, s, scratch_offset(s));
 
 	if ((define && !table_is_entry(new_sym)) || type == ENTRY)
 		table_set_type(new_sym, type);
@@ -126,7 +126,7 @@ static const char* __parse_number_list(scratch_space *s, const char *p)
 		long int num = 0;
 
 		p = __skip_whitespace(__parse_number(&num, p));
-		scratch_write_next_data(s, num, ABSOLUTE);
+		scratch_write_cell(s, num, ABSOLUTE);
 
 		/* If a comma is present, we need to consume one more number. */
 		if (*p != SEPARATOR || __islineterm(*p))
@@ -145,12 +145,12 @@ static const char* __parse_string_list(scratch_space *s, const char *p)
 		/* Parse list item. */
 		while (__isstringchar(*p) && *p != STRING_DELIMITER)
 		{
-			scratch_write_next_data(s, *p, ABSOLUTE);
+			scratch_write_cell(s, *p, ABSOLUTE);
 			++p;
 		}
 
 		/* Write a "null terminator" for the string. */
-		scratch_write_next_data(s, '\0', ABSOLUTE);
+		scratch_write_cell(s, '\0', ABSOLUTE);
 
 		p = __skip_whitespace(p + 1); /* Skip the " and whitespace. */
 
@@ -303,7 +303,7 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 		default_address_set_immediate(ad, num);
 
 		/* Write the number to reserve space. */
-		scratch_write_next_data(is, num, ABSOLUTE);
+		scratch_write_cell(is, num, ABSOLUTE);
 
 		return p;
 	}
@@ -340,9 +340,9 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 		/* Mark this instruction as a reference to the symbol
 		   and write some zeroes to reserve space for this symbol. */
-		first_label_off = scratch_get_global_offset(is, scratch_get_next_offset(is));
+		first_label_off = scratch_to_global(is, scratch_offset(is));
 		table_add_reference(first_sym, first_label_off);
-		scratch_write_next_data(is, 0, ABSOLUTE);
+		scratch_write_cell(is, 0, ABSOLUTE);
 
 		/* Do we have an index or just a symbol address? */
 		if (*p != INDEX_START)
@@ -361,7 +361,7 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 			default_address_set_index_number(ad, num);
 
 			/* Write the number to reserve space. */
-			scratch_write_next_data(is, num, ABSOLUTE);
+			scratch_write_cell(is, num, ABSOLUTE);
 		}
 		else
 		{
@@ -397,9 +397,9 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 
 				/* Mark this instruction as a reference to the symbol
 				   and write some zeroes to reserve space for this symbol. */
-				sec_label_off = scratch_get_global_offset(is, scratch_get_next_offset(is));
+				sec_label_off = scratch_to_global(is, scratch_offset(is));
 				table_add_reference(sec_sym, sec_label_off);
-				scratch_write_next_data(is, 0, ABSOLUTE);
+				scratch_write_cell(is, 0, ABSOLUTE);
 			}
 		}
 
@@ -408,7 +408,8 @@ static const char* __parse_operand(default_translate_context *dtc, const char *p
 	}
 }
 
-static const char* __parse_operands(default_translate_context *dtc, const char *p, default_instruction *inst)
+static const char* __parse_operands(default_translate_context *dtc, const char *p,
+                                    default_instruction *inst)
 {
 	unsigned int operand = 0;
 
@@ -440,21 +441,22 @@ static const char* __parse_instruction(default_translate_context *dtc, const cha
 
 	if (inst == NULL)
 	{
-		error *err = error_make(dtc->line_number, "Unable to allocate space for instruction, quitting");
+		error *err = error_make(dtc->line_number,
+			                    "Unable to allocate space for instruction, quitting");
 		list_insert_before(dtc->errors, &err->errors);
 		return NULL;
 	}
 
 	/* Prepare space in the address space for the instruction. */
 	inst->address_space = dtc->i_scratch;
-	inst->address_offset = scratch_get_next_offset(dtc->i_scratch);
+	inst->address_offset = scratch_offset(dtc->i_scratch);
 
 	/* Define a label for this line if it exists. */
 	if (!__parse_define_label(dtc->i_scratch, dtc, label))
 		goto parse_exit;
 
 	/* Write zeroes for now just to reserve space. */
-	scratch_write_next_data(dtc->i_scratch, 0, ABSOLUTE);
+	scratch_write_cell(dtc->i_scratch, 0, ABSOLUTE);
 
 	p = __skip_whitespace(p + strlen(inst->proto->name));
 

@@ -96,7 +96,7 @@ static int __output_print_entries(table_element *elem, void *arg)
 	symbol *sym = table_entry(elem);
 	scratch_space *s = sym->address_space;
 
-	unsigned int g_offset = scratch_get_global_offset(s, sym->address_offset);
+	unsigned int g_offset = scratch_to_global(s, sym->address_offset);
 
 	if (table_is_entry(sym))
 		fprintf(f, "%s %o\n", sym->name, g_offset);
@@ -154,14 +154,14 @@ typedef void (*printer_func)(FILE*, unsigned int, unsigned int, unsigned int);
 static void __output_dump_space(FILE *object_file, scratch_space *s, printer_func print)
 {
 	unsigned int data, type, offset;
-	unsigned int words = scratch_get_next_offset(s);
+	unsigned int words = scratch_offset(s);
 
 	scratch_rewind(s);
 
 	for (; words > 0; --words)
 	{
-		offset = scratch_get_global_offset(s, scratch_get_next_offset(s));
-		scratch_read_next_data(s, &data, &type);
+		offset = scratch_to_global(s, scratch_offset(s));
+		scratch_read_cell(s, &data, &type);
 
 		print(object_file, offset, data, type);
 	}
@@ -195,8 +195,8 @@ static void __output_print_object_file(default_output_context *doc, FILE *object
 	scratch_space *is = doc->i_scratch, *ds = doc->d_scratch;
 	unsigned int i_words, d_words;
 
-	i_words = scratch_get_next_offset(is);
-	d_words = scratch_get_next_offset(ds);
+	i_words = scratch_offset(is);
+	d_words = scratch_offset(ds);
 
 	/* Print the header line with the word count. */
 	fprintf(object_file, "%o %o\n", i_words, d_words);

@@ -39,6 +39,7 @@ void assembler_destroy(assembler *ass);
 /* Process a file. */
 void assembler_process(assembler *ass, char *file_name);
 
+/* Assign modules to an assembler object by using the module name. */
 #define assembler_dispatch(ass, module_name) \
 	do { \
 		(ass)->input_ops = module_name ## _input_ops; \

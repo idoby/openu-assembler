@@ -67,7 +67,8 @@ static int __finalize_check_labels(table_element *elem, void *arg)
 
 	if (!table_is_defined(sym))
 	{
-		error *err = error_make(ERROR_NO_LINE, "Label '%s' is undefined!", sym->name);
+		error *err = error_make(ERROR_NO_LINE,
+		                        "Label '%s' is undefined!", sym->name);
 		list_insert_before(err_list, &err->errors);
 		return 0;
 	}
@@ -107,14 +108,12 @@ static void __finalize_encode(default_instruction *inst, default_instruction_enc
 
 static void __finalize_write_direct(scratch_space *s, symbol *sym)
 {
-	unsigned int global_off;
 	if (table_is_extern(sym))
-		scratch_write_next_data(s, 0, EXTERNAL);
+		scratch_write_cell(s, 0, EXTERNAL);
 	else
 	{
-		global_off = scratch_get_global_offset(sym->address_space,
-		                                       sym->address_offset);
-		scratch_write_next_data(s, global_off, RELOCATABLE);
+		unsigned int offset = scratch_to_global(sym->address_space, sym->address_offset);
+		scratch_write_cell(s, offset, RELOCATABLE);
 	}
 }
 
@@ -123,51 +122,54 @@ static void __finalize_translate_instruction(default_translate_context *dtc, def
 	unsigned int operand = 0;
 	default_instruction_encoding enc;
 	scratch_space *is = dtc->i_scratch;
-	unsigned int inst_off = scratch_get_global_offset(is, inst->address_offset);
+	unsigned int inst_off = scratch_to_global(is, inst->address_offset);
 
 	/* Encode and write the word that represents the instruction. */
 	__finalize_encode(inst, &enc);
-	scratch_write_next_data(is, *(unsigned int*)(&enc), ABSOLUTE);
+	/* PORTABILITY NOTE: The following line uses a pointer
+	   type cast to reinterpret enc as an int. It is not portable. */
+	scratch_write_cell(is, *(unsigned int*)(&enc), ABSOLUTE);
 
 	for (; operand < inst->proto->num_operands; ++operand)
 	{
 		address ad = inst->operands[operand];
-		int index_distance;
+		int distance;
 		symbol *sym;
 
 		switch (ad.type)
 		{
+		case IMMEDIATE:
+			/* Write the value of the immediate operand to the next memory word. */
+			scratch_write_cell(is, ad.data.immediate_data, ABSOLUTE);
+			break;
+		case DIRECT:
+			/* Write the global value of the symbol to the next memory word. */
+			__finalize_write_direct(is, ad.data.sym);
+			break;
+		case INDEX:
+			__finalize_write_direct(is, ad.data.sym);
+
+			switch(ad.index_type)
+			{
 			case IMMEDIATE:
-				/* Write the value of the immediate operand to the next memory word. */
-				scratch_write_next_data(is, ad.data.immediate_data, ABSOLUTE);
+				scratch_write_cell(is, ad.index_data.immediate_data, ABSOLUTE);
 				break;
 			case DIRECT:
-				/* Write the global value of the symbol to the next memory word. */
-				__finalize_write_direct(is, ad.data.sym);
-				break;
-			case INDEX:
-				__finalize_write_direct(is, ad.data.sym);
+				/* Calculate the distance to the target symbol
+				   and write it to another word. */
+				sym = ad.index_data.sym;
+				distance = scratch_to_global(sym->address_space,
+				                             sym->address_offset) - inst_off;
 
-				switch(ad.index_type)
-				{
-					case IMMEDIATE:
-						scratch_write_next_data(is, ad.index_data.immediate_data, ABSOLUTE);
-						break;
-					case DIRECT:
-						/* Calculate the distance to the target symbol and write it to another word. */
-						sym = ad.index_data.sym;
-						index_distance = scratch_get_global_offset(sym->address_space,
-						                                           sym->address_offset) - inst_off;
-
-						scratch_write_next_data(is, index_distance, ABSOLUTE);
-						break;
-					default:
-						break; /* Impossible at this stage. */
-				}
-
+				scratch_write_cell(is, distance, ABSOLUTE);
 				break;
 			default:
 				break; /* Impossible at this stage. */
+			}
+
+			break;
+		default:
+			break; /* Impossible at this stage. */
 		}
 	}
 }

@@ -12,8 +12,11 @@ typedef struct error {
 	list errors;               /* The rest of the error list. */
 } error;
 
+/* Create a new error object using printf. */
 error* error_make(unsigned int line, char *format, ...);
+/* Print an error object. */
 void error_print(error *err);
+/* Destroy an error object created by error_make. */
 void error_destroy(error *err);
 
 #endif
