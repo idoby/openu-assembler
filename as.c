@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 		/* Assemble the assembler! :D */
 		assembler ass;
 		assembler_init(&ass);
-		assembler_dispatch(ass, default);
+		assembler_dispatch(&ass, default);
 
 		/* Process the file! */
 		assembler_process(&ass, argv[argc]);

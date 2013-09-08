@@ -39,7 +39,7 @@ static int __default_translate_test_line(const char *line, int should_pass, cons
 	assembler ass;
 
 	assembler_init(&ass);
-	assembler_dispatch(ass, default);
+	assembler_dispatch(&ass, default);
 	ass.tc = ass.translate_ops.init(&ass.sym_table, &ass.i_scratch, &ass.d_scratch, &ass.errors);
 
 	test_assert((ass.translate_ops.translate_line(ass.tc, line) == TRANSLATE_LINE_SUCCESS) == should_pass,

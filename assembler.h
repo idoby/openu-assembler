@@ -41,9 +41,9 @@ void assembler_process(assembler *ass, char *file_name);
 
 #define assembler_dispatch(ass, module_name) \
 	do { \
-		ass.input_ops = module_name ## _input_ops; \
-		ass.translate_ops = module_name ## _translate_ops; \
-		ass.output_ops = module_name ## _output_ops; \
+		(ass)->input_ops = module_name ## _input_ops; \
+		(ass)->translate_ops = module_name ## _translate_ops; \
+		(ass)->output_ops = module_name ## _output_ops; \
 	} while(0)
 
 #endif
