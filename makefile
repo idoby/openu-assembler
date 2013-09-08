@@ -1,6 +1,6 @@
 # Some globals
 export CC                 = gcc
-export FLAGS             ?= -g -O3 -ansi -pedantic -Wall -Wextra -I$(abspath .)
+export FLAGS             ?= -g -O4 -ansi -pedantic -Wall -Wextra -I$(abspath .)
 export BUILD_SYSTEM_PATH ?= $(abspath makefile)
 export WITH_TESTS        ?= y
 
